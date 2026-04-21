@@ -7,6 +7,7 @@ import com.ttip.mesa_agil.repository.MenuRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -17,6 +18,11 @@ public class MenuService {
 
     public MenuService(MenuRepository menuRepository) {
         this.menuRepository = menuRepository;
+    }
+
+    public void createItem(String name, String description, String imageUrl, BigDecimal price) {
+        Item item = new Item(null, name, description, imageUrl, price);
+        menuRepository.save(item);
     }
 
     public MenuResponse getMenu() {
@@ -37,6 +43,10 @@ public class MenuService {
                 .toList();
 
         return new MenuResponse(menuItems, null);
+    }
+
+    public boolean isEmpty() {
+        return menuRepository.findAll().isEmpty();
     }
 
 }
