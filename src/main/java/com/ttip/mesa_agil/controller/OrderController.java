@@ -21,6 +21,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(orderId));
     }
 
+    @PutMapping("/close/{orderId}")
+    public ResponseEntity<OrderResponse> closeOrder(@PathVariable Long orderId) {
+        orderService.closeOrderById(orderId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/table/{tableId}")
     public ResponseEntity<OrderResponse> create(@PathVariable Long tableId) {
         return ResponseEntity.ok(orderService.create(new CreateOrderRequest(tableId)));

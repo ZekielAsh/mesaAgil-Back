@@ -40,4 +40,13 @@ public class OrderService {
 
         return OrderResponse.from(order);
     }
+
+    public void closeOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new ResourceNotFoundException("Order with id " + orderId + " doesn't exist")
+        );
+
+        order.setStatus(OrderStatus.CLOSED);
+        orderRepository.save(order);
+    }
 }
