@@ -7,6 +7,7 @@ import com.ttip.mesa_agil.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "http://localhost:8081")
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
