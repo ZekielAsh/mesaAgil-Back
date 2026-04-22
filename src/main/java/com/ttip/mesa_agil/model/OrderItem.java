@@ -31,7 +31,7 @@ public class OrderItem {
 
     private int quantity;
 
-    private BigDecimal price;
+    private BigDecimal unitPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

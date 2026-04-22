@@ -2,6 +2,7 @@ package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.MenuItemDTO;
 import com.ttip.mesa_agil.dto.MenuResponse;
+import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.repository.MenuRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,12 @@ public class MenuService {
                 .toList();
 
         return new MenuResponse(menuItems, null);
+    }
+
+    public Item getItemById(Long itemId) {
+        return menuRepository.findById(itemId).orElseThrow(
+                () -> new ResourceNotFoundException(itemId)
+        );
     }
 
     public boolean isEmpty() {

@@ -1,5 +1,7 @@
 package com.ttip.mesa_agil.config;
 
+import com.ttip.mesa_agil.dto.CreateOrderItemRequest;
+import com.ttip.mesa_agil.dto.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.CreateOrderRequest;
 import com.ttip.mesa_agil.model.RestaurantTable;
@@ -8,9 +10,9 @@ import com.ttip.mesa_agil.service.OrderService;
 import com.ttip.mesa_agil.service.RestaurantTableService;
 import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public class DevDataSeeder implements CommandLineRunner {
@@ -61,5 +63,16 @@ public class DevDataSeeder implements CommandLineRunner {
         CreateOrderRequest createOrderRequest = new CreateOrderRequest(restaurantTable.getId());
 
         orderService.create(createOrderRequest);
+
+        orderService.addItems(
+                1L,
+                new CreateOrderItemsRequest(
+                        List.of(
+                                new CreateOrderItemRequest(1L, 2),
+                                new CreateOrderItemRequest(2L, 1),
+                                new CreateOrderItemRequest(3L, 1)
+                        )
+                )
+        );
     }
 }

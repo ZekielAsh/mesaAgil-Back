@@ -1,5 +1,6 @@
 package com.ttip.mesa_agil.handler;
 
+import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
 import org.springframework.http.HttpStatus;
@@ -21,5 +22,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiError.of("The table already has an open order", HttpStatus.CONFLICT));
+    }
+
+    @ExceptionHandler(OrderClosedException.class)
+    public ResponseEntity<ApiError> handleOrderClosed(OrderClosedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("Cannot modify a closed order", HttpStatus.CONFLICT));
     }
 }
