@@ -1,9 +1,6 @@
 package com.ttip.mesa_agil.config;
 
-import com.ttip.mesa_agil.dto.CreateOrderItemRequest;
-import com.ttip.mesa_agil.dto.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.CreateRestaurantTableRequest;
-import com.ttip.mesa_agil.dto.CreateOrderRequest;
+import com.ttip.mesa_agil.dto.*;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.service.MenuService;
 import com.ttip.mesa_agil.service.OrderService;
@@ -12,7 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Component
 public class DevDataSeeder implements CommandLineRunner {
@@ -60,12 +59,33 @@ public class DevDataSeeder implements CommandLineRunner {
         CreateRestaurantTableRequest createRestaurantTableRequest = new CreateRestaurantTableRequest(1);
         RestaurantTable restaurantTable = restaurantTableService.create(createRestaurantTableRequest);
 
+        List<MenuItemDTO> menu = menuService.getMenu().getItems();
+
+        Random random = new Random();
+
         CreateOrderRequest createOrderRequest = new CreateOrderRequest(restaurantTable.getId());
 
-        orderService.create(createOrderRequest);
+        for (int i = 0; i < 5; i++ ) {
+            OrderResponse order = orderService.create(createOrderRequest);
+
+            List<CreateOrderItemRequest> orderItemRequestList = new ArrayList<>();
+
+            for (MenuItemDTO menuItemDTO : menu) {
+                orderItemRequestList.add(new CreateOrderItemRequest(
+                        menuItemDTO.getId(),
+                        (1 + random.nextInt(10)))
+                );
+            }
+
+            orderService.addItems(order.id(), new CreateOrderItemsRequest(orderItemRequestList));
+
+            orderService.closeOrderById(order.id());
+        }
+
+        OrderResponse actualOrder = orderService.create(createOrderRequest);
 
         orderService.addItems(
-                1L,
+                actualOrder.id(),
                 new CreateOrderItemsRequest(
                         List.of(
                                 new CreateOrderItemRequest(1L, 2),
@@ -74,5 +94,16 @@ public class DevDataSeeder implements CommandLineRunner {
                         )
                 )
         );
+
+        List<CreateOrderItemRequest> orderItemRequestList = new ArrayList<>();
+
+        for (MenuItemDTO menuItemDTO : menu) {
+            orderItemRequestList.add(new CreateOrderItemRequest(
+                    menuItemDTO.getId(),
+                    (1 + random.nextInt(10)))
+            );
+        }
+
+        orderService.addItems(actualOrder.id(), new CreateOrderItemsRequest(orderItemRequestList));
     }
 }
