@@ -11,7 +11,8 @@ public class ItemMapper {
                 item.getName(),
                 item.getDescription(),
                 item.getImageUrl(),
-                item.getPrice()
+                item.getPrice(),
+                item.getFoodCategory().getName()
         );
     }
 }

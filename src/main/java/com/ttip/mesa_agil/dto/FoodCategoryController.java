@@ -1,0 +1,61 @@
+package com.ttip.mesa_agil.dto;
+
+import com.ttip.mesa_agil.mapper.CategoryMapper;
+import com.ttip.mesa_agil.model.FoodCategory;
+import com.ttip.mesa_agil.service.FoodCategoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/categories")
+@RequiredArgsConstructor
+public class FoodCategoryController {
+
+    private final FoodCategoryService foodCategoryService;
+    private final CategoryMapper foodCategoryMapper;
+
+    @PostMapping
+    public ResponseEntity<CategoryResponse> create(
+            @RequestBody CreateCategoryRequest request) {
+
+        FoodCategory foodCategory = FoodCategoryService.create(request.getName());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CategoryMapper.toResponse(foodCategory));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponse> update(
+            @PathVariable Long id,
+            @RequestBody CreateCategoryRequest request) {
+
+        FoodCategory FoodCategory = FoodCategoryService.update(id, request.getName());
+
+        return ResponseEntity.ok(
+                CategoryMapper.toResponse(FoodCategory)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+
+        FoodCategoryService.delete(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CategoryResponse>> findAll() {
+
+        List<CategoryResponse> response = FoodCategoryService.findAll()
+                .stream()
+                .map(CategoryMapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+}

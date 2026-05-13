@@ -1,0 +1,17 @@
+package com.ttip.mesa_agil.mapper;
+
+import com.ttip.mesa_agil.dto.CategoryResponse;
+import com.ttip.mesa_agil.model.FoodCategory;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CategoryMapper {
+
+    public static CategoryResponse toResponse(FoodCategory category) {
+
+        return new CategoryResponse(
+                category.getId(),
+                category.getName()
+        );
+    }
+}
