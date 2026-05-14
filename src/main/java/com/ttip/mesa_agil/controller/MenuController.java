@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.controller;
 
-import com.ttip.mesa_agil.dto.MenuResponse;
+import com.ttip.mesa_agil.dto.responses.MenuResponse;
 import com.ttip.mesa_agil.service.MenuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

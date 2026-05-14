@@ -1,5 +1,7 @@
-package com.ttip.mesa_agil.dto;
+package com.ttip.mesa_agil.controller;
 
+import com.ttip.mesa_agil.dto.responses.CategoryResponse;
+import com.ttip.mesa_agil.dto.requests.CreateCategoryRequest;
 import com.ttip.mesa_agil.mapper.CategoryMapper;
 import com.ttip.mesa_agil.model.FoodCategory;
 import com.ttip.mesa_agil.service.FoodCategoryService;

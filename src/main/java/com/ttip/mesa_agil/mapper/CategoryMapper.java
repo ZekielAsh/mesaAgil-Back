@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.mapper;
 
-import com.ttip.mesa_agil.dto.CategoryResponse;
+import com.ttip.mesa_agil.dto.responses.CategoryResponse;
 import com.ttip.mesa_agil.model.FoodCategory;
 import org.springframework.stereotype.Component;
 

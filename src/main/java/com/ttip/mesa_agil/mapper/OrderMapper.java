@@ -1,7 +1,7 @@
 package com.ttip.mesa_agil.mapper;
 
-import com.ttip.mesa_agil.dto.OrderItemResponse;
-import com.ttip.mesa_agil.dto.OrderResponse;
+import com.ttip.mesa_agil.dto.responses.OrderItemResponse;
+import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.model.Order;
 import com.ttip.mesa_agil.model.RestaurantTable;
 

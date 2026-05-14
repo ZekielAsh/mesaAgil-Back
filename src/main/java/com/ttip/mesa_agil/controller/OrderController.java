@@ -1,8 +1,8 @@
 package com.ttip.mesa_agil.controller;
 
-import com.ttip.mesa_agil.dto.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.CreateOrderRequest;
-import com.ttip.mesa_agil.dto.OrderResponse;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
+import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

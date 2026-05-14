@@ -1,4 +1,4 @@
-package com.ttip.mesa_agil.dto;
+package com.ttip.mesa_agil.dto.requests;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

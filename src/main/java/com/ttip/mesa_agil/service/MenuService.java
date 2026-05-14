@@ -1,7 +1,7 @@
 package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.MenuItemDTO;
-import com.ttip.mesa_agil.dto.MenuResponse;
+import com.ttip.mesa_agil.dto.responses.MenuResponse;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.repository.MenuRepository;

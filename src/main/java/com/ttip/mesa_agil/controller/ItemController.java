@@ -1,8 +1,8 @@
 package com.ttip.mesa_agil.controller;
 
-import com.ttip.mesa_agil.dto.CreateItemRequest;
-import com.ttip.mesa_agil.dto.ItemResponse;
-import com.ttip.mesa_agil.dto.UpdateItemRequest;
+import com.ttip.mesa_agil.dto.requests.CreateItemRequest;
+import com.ttip.mesa_agil.dto.responses.ItemResponse;
+import com.ttip.mesa_agil.dto.requests.UpdateItemRequest;
 import com.ttip.mesa_agil.mapper.ItemMapper;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.service.ItemService;

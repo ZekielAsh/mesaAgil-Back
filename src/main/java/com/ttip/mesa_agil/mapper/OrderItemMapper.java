@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.mapper;
 
-import com.ttip.mesa_agil.dto.OrderItemResponse;
+import com.ttip.mesa_agil.dto.responses.OrderItemResponse;
 import com.ttip.mesa_agil.model.OrderItem;
 
 public class OrderItemMapper {

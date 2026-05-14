@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.service;
 
-import com.ttip.mesa_agil.dto.CreateRestaurantTableRequest;
+import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.mapper.RestaurantTableMapper;
 import com.ttip.mesa_agil.model.RestaurantTable;

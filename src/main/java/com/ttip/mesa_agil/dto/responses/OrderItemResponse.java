@@ -1,4 +1,4 @@
-package com.ttip.mesa_agil.dto;
+package com.ttip.mesa_agil.dto.responses;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

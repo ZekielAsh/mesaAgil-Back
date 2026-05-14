@@ -1,8 +1,8 @@
 package com.ttip.mesa_agil.service;
 
-import com.ttip.mesa_agil.dto.CreateOrderItemRequest;
-import com.ttip.mesa_agil.dto.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.CreateOrderRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
@@ -13,7 +13,7 @@ import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.repository.OrderRepository;
-import com.ttip.mesa_agil.dto.OrderResponse;
+import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.model.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,8 +1,8 @@
 package com.ttip.mesa_agil.service;
 
-import com.ttip.mesa_agil.dto.BaseItemRequest;
-import com.ttip.mesa_agil.dto.CreateItemRequest;
-import com.ttip.mesa_agil.dto.UpdateItemRequest;
+import com.ttip.mesa_agil.dto.requests.BaseItemRequest;
+import com.ttip.mesa_agil.dto.requests.CreateItemRequest;
+import com.ttip.mesa_agil.dto.requests.UpdateItemRequest;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.exception.ValidationFailedException;
 import com.ttip.mesa_agil.model.FoodCategory;

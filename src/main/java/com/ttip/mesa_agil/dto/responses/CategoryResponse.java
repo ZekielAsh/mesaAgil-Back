@@ -1,4 +1,4 @@
-package com.ttip.mesa_agil.dto;
+package com.ttip.mesa_agil.dto.responses;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

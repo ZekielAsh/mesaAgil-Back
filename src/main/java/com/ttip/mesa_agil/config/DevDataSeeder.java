@@ -1,6 +1,11 @@
 package com.ttip.mesa_agil.config;
 
 import com.ttip.mesa_agil.dto.*;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
+import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
+import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.service.MenuService;
 import com.ttip.mesa_agil.service.OrderService;

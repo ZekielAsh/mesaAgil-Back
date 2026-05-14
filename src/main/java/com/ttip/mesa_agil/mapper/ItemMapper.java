@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.mapper;
 
-import com.ttip.mesa_agil.dto.ItemResponse;
+import com.ttip.mesa_agil.dto.responses.ItemResponse;
 import com.ttip.mesa_agil.model.Item;
 
 public class ItemMapper {
