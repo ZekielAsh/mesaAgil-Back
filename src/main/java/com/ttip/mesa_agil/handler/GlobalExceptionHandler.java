@@ -1,5 +1,6 @@
 package com.ttip.mesa_agil.handler;
 
+import com.ttip.mesa_agil.exception.CategoryNotEmptyException;
 import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
@@ -28,5 +29,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleOrderClosed(OrderClosedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiError.of("Cannot modify a closed order", HttpStatus.CONFLICT));
+    }
+
+    @ExceptionHandler(CategoryNotEmptyException.class)
+    public ResponseEntity<ApiError> handleCategoryNotEmpty(CategoryNotEmptyException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("Cannot delete a non empty category", HttpStatus.CONFLICT));
     }
 }

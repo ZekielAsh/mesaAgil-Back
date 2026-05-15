@@ -1,14 +1,17 @@
 package com.ttip.mesa_agil.service;
 
+import com.ttip.mesa_agil.exception.CategoryNotEmptyException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.model.FoodCategory;
 import com.ttip.mesa_agil.repository.FoodCategoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class FoodCategoryService {
 
     private final FoodCategoryRepository foodCategoryRepository;
@@ -55,8 +58,16 @@ public class FoodCategoryService {
 
     public void delete(Long id) {
 
-        FoodCategory category = foodCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        FoodCategory category =
+                foodCategoryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Category not found"
+                                ));
+
+        if (!category.getComidas().isEmpty()) {
+            throw new CategoryNotEmptyException("Cannot delete a non empty category");
+        }
 
         foodCategoryRepository.delete(category);
     }

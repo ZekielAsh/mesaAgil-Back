@@ -11,7 +11,8 @@ public class CategoryMapper {
 
         return new CategoryResponse(
                 category.getId(),
-                category.getName()
+                category.getName(),
+                category.getComidas().size()
         );
     }
 }

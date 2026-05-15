@@ -31,7 +31,7 @@ public class Item {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "food_category_id", nullable = false)
     private FoodCategory foodCategory;
 
