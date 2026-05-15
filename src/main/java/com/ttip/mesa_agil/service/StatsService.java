@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.service;
 
-import com.ttip.mesa_agil.dto.StatsSummaryResponse;
+import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.dto.TopItemDto;
 import com.ttip.mesa_agil.dto.TopRevenueItemDto;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;

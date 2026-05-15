@@ -1,4 +1,6 @@
-package com.ttip.mesa_agil.dto;
+package com.ttip.mesa_agil.dto.responses;
+
+import com.ttip.mesa_agil.dto.MenuItemDTO;
 
 import java.util.List;
 

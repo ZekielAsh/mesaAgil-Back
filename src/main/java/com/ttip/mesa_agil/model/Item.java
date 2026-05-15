@@ -31,4 +31,8 @@ public class Item {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @ManyToOne
+    @JoinColumn(name = "food_category_id", nullable = false)
+    private FoodCategory foodCategory;
+
 }

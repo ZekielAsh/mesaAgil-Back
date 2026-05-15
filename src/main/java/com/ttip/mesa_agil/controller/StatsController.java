@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.controller;
 
-import com.ttip.mesa_agil.dto.StatsSummaryResponse;
+import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 import com.ttip.mesa_agil.service.StatsService;
 import org.springframework.http.ResponseEntity;

@@ -1,10 +1,10 @@
 package com.ttip.mesa_agil.service;
 
-import com.ttip.mesa_agil.dto.CreateOrderItemRequest;
-import com.ttip.mesa_agil.dto.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.CreateOrderRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.exception.OrderClosedException;
-import com.ttip.mesa_agil.exception.ResourceNotFoundException;
+import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.Item;
@@ -13,7 +13,7 @@ import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.repository.OrderRepository;
-import com.ttip.mesa_agil.dto.OrderResponse;
+import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.model.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +49,7 @@ public class OrderService {
 
     public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
-                () -> new ResourceNotFoundException(orderId)
+                () -> new OrderNotFoundException(orderId)
         );
 
         return OrderMapper.toResponse(order);
@@ -57,7 +57,7 @@ public class OrderService {
 
     public void closeOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
-                () -> new ResourceNotFoundException(orderId)
+                () -> new OrderNotFoundException(orderId)
         );
 
         order.setStatus(OrderStatus.CLOSED);
@@ -68,7 +68,7 @@ public class OrderService {
     public OrderResponse addItems(Long orderId, CreateOrderItemsRequest request) {
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException(orderId));
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         if (order.getStatus() == OrderStatus.CLOSED) {
             throw new OrderClosedException(orderId);
