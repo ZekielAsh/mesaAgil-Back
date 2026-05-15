@@ -24,10 +24,10 @@ public class FoodCategoryController {
     public ResponseEntity<CategoryResponse> create(
             @RequestBody CreateCategoryRequest request) {
 
-        FoodCategory foodCategory = FoodCategoryService.create(request.getName());
+        FoodCategory foodCategory = foodCategoryService.create(request.getName());
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CategoryMapper.toResponse(foodCategory));
+                .body(foodCategoryMapper.toResponse(foodCategory));
     }
 
     @PutMapping("/{id}")
@@ -35,17 +35,17 @@ public class FoodCategoryController {
             @PathVariable Long id,
             @RequestBody CreateCategoryRequest request) {
 
-        FoodCategory FoodCategory = FoodCategoryService.update(id, request.getName());
+        FoodCategory FoodCategory = foodCategoryService.update(id, request.getName());
 
         return ResponseEntity.ok(
-                CategoryMapper.toResponse(FoodCategory)
+                foodCategoryMapper.toResponse(FoodCategory)
         );
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
 
-        FoodCategoryService.delete(id);
+        foodCategoryService.delete(id);
 
         return ResponseEntity.noContent().build();
     }
@@ -53,9 +53,9 @@ public class FoodCategoryController {
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> findAll() {
 
-        List<CategoryResponse> response = FoodCategoryService.findAll()
+        List<CategoryResponse> response = foodCategoryService.findAll()
                 .stream()
-                .map(CategoryMapper::toResponse)
+                .map(foodCategoryMapper::toResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
