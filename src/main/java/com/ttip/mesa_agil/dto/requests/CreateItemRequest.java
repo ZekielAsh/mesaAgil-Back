@@ -10,6 +10,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CreateItemRequest extends BaseItemRequest {
     public CreateItemRequest(String name, String description, String imageUrl, BigDecimal price, Long categoryId) {
-        super(name, description, imageUrl, price, categoryId);
+        super(name, description, imageUrl, price, categoryId, true);
     }
 }

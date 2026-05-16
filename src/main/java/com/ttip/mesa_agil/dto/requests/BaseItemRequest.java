@@ -16,4 +16,5 @@ public class BaseItemRequest {
     private String imageUrl;
     private BigDecimal price;
     private Long categoryId;
+    private Boolean active;
 }

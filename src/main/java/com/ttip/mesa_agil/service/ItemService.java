@@ -37,6 +37,7 @@ public class ItemService {
         item.setImageUrl(request.getImageUrl().trim());
         item.setPrice(request.getPrice());
         item.setFoodCategory(category);
+        item.setActive(true);
 
         return itemRepository.save(item);
     }
@@ -58,6 +59,9 @@ public class ItemService {
         item.setImageUrl(request.getImageUrl().trim());
         item.setPrice(request.getPrice());
         item.setFoodCategory(category);
+        if (request.getActive() != null) {
+            item.setActive(request.getActive());
+        }
 
         return itemRepository.save(item);
     }
@@ -96,5 +100,6 @@ public class ItemService {
         if (request.getCategoryId() == null) {
             throw new ValidationFailedException("Category is required");
         }
+
     }
 }

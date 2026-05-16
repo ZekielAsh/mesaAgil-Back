@@ -33,12 +33,12 @@ public class MenuService {
                 () -> new ResourceNotFoundException("Category with id " + categoryId + " doesn't exist")
         );
 
-        Item item = new Item(null, name, description, imageUrl, price, category);
+        Item item = new Item(null, name, description, imageUrl, price, true, category);
         menuRepository.save(item);
     }
 
     public MenuResponse getMenu() {
-        List<Item> items = menuRepository.findAll();
+        List<Item> items = menuRepository.findByActiveTrue();
 
         if (items.isEmpty()) {
             return new MenuResponse(List.of(), "No hay comidas disponibles");

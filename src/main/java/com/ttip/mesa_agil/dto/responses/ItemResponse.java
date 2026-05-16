@@ -7,6 +7,7 @@ public record ItemResponse(Long id,
                            String description,
                            String imageUrl,
                            BigDecimal price,
-                           String categoryName)
+                           String categoryName,
+                           Boolean active)
 {
 }
