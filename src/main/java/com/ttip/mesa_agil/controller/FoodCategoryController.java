@@ -8,6 +8,7 @@ import com.ttip.mesa_agil.service.FoodCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class FoodCategoryController {
     private final FoodCategoryService foodCategoryService;
     private final CategoryMapper foodCategoryMapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<CategoryResponse> create(
             @RequestBody CreateCategoryRequest request) {
@@ -30,6 +32,7 @@ public class FoodCategoryController {
                 .body(foodCategoryMapper.toResponse(foodCategory));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponse> update(
             @PathVariable Long id,
@@ -42,6 +45,7 @@ public class FoodCategoryController {
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
 
@@ -50,6 +54,7 @@ public class FoodCategoryController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> findAll() {
 
