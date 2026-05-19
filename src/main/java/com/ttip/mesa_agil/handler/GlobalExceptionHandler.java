@@ -4,10 +4,14 @@ import com.ttip.mesa_agil.exception.CategoryNotEmptyException;
 import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -35,5 +39,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleCategoryNotEmpty(CategoryNotEmptyException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiError.of("Cannot delete a non empty category", HttpStatus.CONFLICT));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            ConstraintViolationException ex
+    ) {
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getConstraintViolations().forEach(v -> {
+            String fullPath = v.getPropertyPath().toString();
+
+            String field = fullPath.contains(".")
+                    ? fullPath.substring(fullPath.lastIndexOf(".") + 1)
+                    : fullPath;
+
+            errors.put(field, v.getMessage());
+        });
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of("Validation error", errors));
     }
 }
