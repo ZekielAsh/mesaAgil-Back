@@ -2,9 +2,11 @@ package com.ttip.mesa_agil.integration;
 
 import com.ttip.mesa_agil.controller.MenuController;
 import com.ttip.mesa_agil.dto.responses.MenuResponse;
+import com.ttip.mesa_agil.security.jwt.JwtAuthFilter;
 import com.ttip.mesa_agil.service.MenuService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -15,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 @WebMvcTest(MenuController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class MenuControllerTest {
 
     @Autowired
@@ -22,6 +25,9 @@ public class MenuControllerTest {
 
     @MockitoBean
     MenuService menuService;
+
+    @MockitoBean
+    JwtAuthFilter jwtAuthFilter;
 
     @Test
     void getMenu() {
