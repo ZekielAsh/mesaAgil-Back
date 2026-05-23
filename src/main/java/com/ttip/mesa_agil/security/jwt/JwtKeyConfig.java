@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -14,18 +16,48 @@ import java.util.Base64;
 @Configuration
 public class JwtKeyConfig {
 
-    @Value("${rsa.public.key}")
+    @Value("${rsa.public.key:}")
     private String publicKeyPem;
 
-    @Value("${rsa.private.key}")
+    @Value("${rsa.private.key:}")
     private String privateKeyPem;
 
     @Bean
-    public RSAPublicKey rsaPublicKey() throws Exception {
-        String cleanKey = publicKeyPem
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s", "");
+    public KeyPair rsaKeyPair() throws Exception {
+        boolean hasPublicKey = hasText(publicKeyPem);
+        boolean hasPrivateKey = hasText(privateKeyPem);
+
+        if (hasPublicKey != hasPrivateKey) {
+            throw new IllegalStateException(
+                    "Both rsa.public.key and rsa.private.key must be configured, or neither of them."
+            );
+        }
+
+        if (!hasPublicKey) {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            return keyPairGenerator.generateKeyPair();
+        }
+
+        return new KeyPair(parsePublicKey(publicKeyPem), parsePrivateKey(privateKeyPem));
+    }
+
+    @Bean
+    public RSAPublicKey rsaPublicKey(KeyPair rsaKeyPair) {
+        return (RSAPublicKey) rsaKeyPair.getPublic();
+    }
+
+    @Bean
+    public RSAPrivateKey rsaPrivateKey(KeyPair rsaKeyPair) {
+        return (RSAPrivateKey) rsaKeyPair.getPrivate();
+    }
+
+    private RSAPublicKey parsePublicKey(String keyPem) throws Exception {
+        String cleanKey = cleanPem(
+                keyPem,
+                "-----BEGIN PUBLIC KEY-----",
+                "-----END PUBLIC KEY-----"
+        );
 
         byte[] decoded = Base64.getDecoder().decode(cleanKey);
 
@@ -35,19 +67,30 @@ public class JwtKeyConfig {
         return (RSAPublicKey) keyFactory.generatePublic(keySpec);
     }
 
-    @Bean
-    public RSAPrivateKey rsaPrivateKey() throws Exception {
-        String cleanKey = privateKeyPem
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s+", "");
+    private RSAPrivateKey parsePrivateKey(String keyPem) throws Exception {
+        String cleanKey = cleanPem(
+                keyPem,
+                "-----BEGIN PRIVATE KEY-----",
+                "-----END PRIVATE KEY-----"
+        );
 
         byte[] decoded = Base64.getDecoder().decode(cleanKey);
 
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
-
         return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+    }
+
+    private String cleanPem(String keyPem, String beginMarker, String endMarker) {
+        return keyPem
+                .replace("\\n", "\n")
+                .replace(beginMarker, "")
+                .replace(endMarker, "")
+                .replaceAll("\\s+", "");
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
 }
