@@ -10,9 +10,11 @@ import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
 import com.ttip.mesa_agil.handler.GlobalExceptionHandler;
+import com.ttip.mesa_agil.security.jwt.JwtAuthFilter;
 import com.ttip.mesa_agil.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 @WebMvcTest(OrderController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 public class OrderControllerTest {
 
@@ -38,6 +41,9 @@ public class OrderControllerTest {
 
     @MockitoBean
     OrderService orderService;
+
+    @MockitoBean
+    JwtAuthFilter jwtAuthFilter;
 
     @Test
     void getOrderById() {

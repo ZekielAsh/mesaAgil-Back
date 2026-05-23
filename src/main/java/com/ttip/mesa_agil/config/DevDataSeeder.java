@@ -8,10 +8,7 @@ import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.model.FoodCategory;
 import com.ttip.mesa_agil.model.RestaurantTable;
-import com.ttip.mesa_agil.service.FoodCategoryService;
-import com.ttip.mesa_agil.service.MenuService;
-import com.ttip.mesa_agil.service.OrderService;
-import com.ttip.mesa_agil.service.RestaurantTableService;
+import com.ttip.mesa_agil.service.*;
 import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
 
@@ -27,12 +24,14 @@ public class DevDataSeeder implements CommandLineRunner {
     private final RestaurantTableService restaurantTableService;
     private final MenuService menuService;
     private final FoodCategoryService foodCategoryService;
+    private final UserService userService;
 
-    public DevDataSeeder(OrderService orderService, RestaurantTableService restaurantTableService, MenuService menuService, FoodCategoryService foodCategoryService) {
+    public DevDataSeeder(OrderService orderService, RestaurantTableService restaurantTableService, MenuService menuService, FoodCategoryService foodCategoryService, UserService userService) {
         this.orderService = orderService;
         this.restaurantTableService = restaurantTableService;
         this.menuService = menuService;
         this.foodCategoryService = foodCategoryService;
+        this.userService = userService;
     }
 
     @Override
@@ -137,5 +136,9 @@ public class DevDataSeeder implements CommandLineRunner {
         }
 
         orderService.addItems(actualOrder.id(), new CreateOrderItemsRequest(orderItemRequestList));
+
+        userService.createAdmin("admin", "admin123");
+        userService.createKitchen("kitchen", "kitchen123");
+        userService.createStaff("staff", "staff123");
     }
 }

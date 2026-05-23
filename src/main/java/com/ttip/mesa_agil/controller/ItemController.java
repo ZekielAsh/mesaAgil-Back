@@ -9,6 +9,7 @@ import com.ttip.mesa_agil.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class ItemController {
 
     private final ItemService itemService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ItemResponse> create(
             @RequestBody CreateItemRequest request) {
@@ -30,6 +32,7 @@ public class ItemController {
                 .body(ItemMapper.toResponse(item));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ItemResponse> update(
             @PathVariable Long id,
@@ -42,6 +45,7 @@ public class ItemController {
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
 
@@ -50,6 +54,7 @@ public class ItemController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<ItemResponse>> findAll() {
 

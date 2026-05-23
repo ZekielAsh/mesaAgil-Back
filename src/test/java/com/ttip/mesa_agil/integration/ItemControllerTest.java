@@ -5,9 +5,11 @@ import com.ttip.mesa_agil.dto.requests.CreateItemRequest;
 import com.ttip.mesa_agil.dto.requests.UpdateItemRequest;
 import com.ttip.mesa_agil.model.FoodCategory;
 import com.ttip.mesa_agil.model.Item;
+import com.ttip.mesa_agil.security.jwt.JwtAuthFilter;
 import com.ttip.mesa_agil.service.ItemService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +25,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @WebMvcTest(ItemController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class ItemControllerTest {
 
     @Autowired
@@ -30,6 +33,9 @@ public class ItemControllerTest {
 
     @MockitoBean
     ItemService itemService;
+
+    @MockitoBean
+    JwtAuthFilter jwtAuthFilter;
 
     @Test
     void createItem() {
