@@ -3,6 +3,7 @@ package com.ttip.mesa_agil.handler;
 import com.ttip.mesa_agil.exception.CategoryNotEmptyException;
 import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
+import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(OrderNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of("Resource not found", HttpStatus.NOT_FOUND));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiError.of("Resource not found", HttpStatus.NOT_FOUND));
     }
