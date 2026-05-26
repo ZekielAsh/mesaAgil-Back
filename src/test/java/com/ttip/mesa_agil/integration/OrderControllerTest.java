@@ -10,6 +10,7 @@ import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
 import com.ttip.mesa_agil.handler.GlobalExceptionHandler;
+import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.security.jwt.JwtAuthFilter;
 import com.ttip.mesa_agil.service.OrderService;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,7 @@ public class OrderControllerTest {
         OrderItemResponse orderItem = new OrderItemResponse(
                 1L,
                 1L,
+                1,
                 new ItemResponse(
                         1L,
                         "Pizza",
@@ -61,7 +63,7 @@ public class OrderControllerTest {
                 ),
                 2,
                 BigDecimal.valueOf(1000),
-                "OPEN",
+                OrderItemStatus.PENDING,
                 LocalDateTime.now()
         );
 
@@ -104,6 +106,7 @@ public class OrderControllerTest {
         OrderItemResponse orderItem = new OrderItemResponse(
                 1L,
                 1L,
+                1,
                 new ItemResponse(
                         1L,
                         "Pizza",
@@ -115,7 +118,7 @@ public class OrderControllerTest {
                 ),
                 2,
                 BigDecimal.valueOf(1000),
-                "OPEN",
+                OrderItemStatus.PENDING,
                 LocalDateTime.now()
         );
 
@@ -147,6 +150,7 @@ public class OrderControllerTest {
         OrderItemResponse orderItem = new OrderItemResponse(
                 1L,
                 1L,
+                1,
                 new ItemResponse(
                         1L,
                         "Pizza",
@@ -158,7 +162,7 @@ public class OrderControllerTest {
                 ),
                 2,
                 BigDecimal.valueOf(1000),
-                "OPEN",
+                OrderItemStatus.PENDING,
                 LocalDateTime.now()
         );
 
