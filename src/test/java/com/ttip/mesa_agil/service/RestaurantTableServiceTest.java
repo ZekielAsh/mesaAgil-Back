@@ -64,11 +64,17 @@ public class RestaurantTableServiceTest {
                     table.setId(1L);
                     return table;
                 });
+        when(orderRepository.existsByTableIdAndStatus(1L, OrderStatus.OPEN))
+                .thenReturn(false);
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
 
         RestaurantTable table = restaurantTableService.create(new CreateRestaurantTableRequest(5));
 
         assertThat(table.getQrToken()).isNotBlank();
         verify(restaurantTableRepository).saveAndFlush(any(RestaurantTable.class));
+        verify(orderRepository).save(any(Order.class));
     }
 
     @Test

@@ -61,7 +61,10 @@ public class RestaurantTableService {
         table.setQrToken(generateUniqueQrToken());
 
         try {
-            return restaurantTableRepository.saveAndFlush(table);
+            RestaurantTable savedTable = restaurantTableRepository.saveAndFlush(table);
+            createInitialOpenOrder(savedTable);
+
+            return savedTable;
         } catch (DataIntegrityViolationException ex) {
             throw new RestaurantTableAlreadyExistsException(createRestaurantTableRequest.number());
         }
@@ -156,6 +159,17 @@ public class RestaurantTableService {
 
     private String buildQrImageUrl(String qrToken) {
         return qrImageUrlTemplate.replace("{qrToken}", qrToken);
+    }
+
+    private void createInitialOpenOrder(RestaurantTable table) {
+        if (orderRepository.existsByTableIdAndStatus(table.getId(), OrderStatus.OPEN)) {
+            return;
+        }
+        Order order = new Order();
+        order.setTable(table);
+        order.setStatus(OrderStatus.OPEN);
+
+        orderRepository.save(order);
     }
 
     private RestaurantTableQrResponse toQrResponse(RestaurantTable table) {
