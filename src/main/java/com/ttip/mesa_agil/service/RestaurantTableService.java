@@ -5,12 +5,14 @@ import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
+import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
 import com.ttip.mesa_agil.mapper.RestaurantTableMapper;
 import com.ttip.mesa_agil.model.Order;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.repository.OrderRepository;
 import com.ttip.mesa_agil.repository.RestaurantTableRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,10 +53,23 @@ public class RestaurantTableService {
 
     @Transactional
     public RestaurantTable create(CreateRestaurantTableRequest createRestaurantTableRequest) {
+        if (restaurantTableRepository.existsByNumber(createRestaurantTableRequest.number())) {
+            throw new RestaurantTableAlreadyExistsException(createRestaurantTableRequest.number());
+        }
+
         RestaurantTable table = RestaurantTableMapper.toEntity(createRestaurantTableRequest);
         table.setQrToken(generateUniqueQrToken());
 
-        return restaurantTableRepository.save(table);
+        try {
+            return restaurantTableRepository.saveAndFlush(table);
+        } catch (DataIntegrityViolationException ex) {
+            throw new RestaurantTableAlreadyExistsException(createRestaurantTableRequest.number());
+        }
+    }
+
+    @Transactional
+    public RestaurantTableQrResponse createWithQrInfo(CreateRestaurantTableRequest createRestaurantTableRequest) {
+        return toQrResponse(create(createRestaurantTableRequest));
     }
 
     @Transactional

@@ -3,6 +3,7 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
+import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
 import com.ttip.mesa_agil.model.Order;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
@@ -18,8 +19,10 @@ import java.util.Optional;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,9 +54,11 @@ public class RestaurantTableServiceTest {
 
     @Test
     void createGeneratesUniqueQrToken() {
+        when(restaurantTableRepository.existsByNumber(5))
+                .thenReturn(false);
         when(restaurantTableRepository.existsByQrToken(anyString()))
                 .thenReturn(false);
-        when(restaurantTableRepository.save(any(RestaurantTable.class)))
+        when(restaurantTableRepository.saveAndFlush(any(RestaurantTable.class)))
                 .thenAnswer(invocation -> {
                     RestaurantTable table = invocation.getArgument(0);
                     table.setId(1L);
@@ -63,7 +68,18 @@ public class RestaurantTableServiceTest {
         RestaurantTable table = restaurantTableService.create(new CreateRestaurantTableRequest(5));
 
         assertThat(table.getQrToken()).isNotBlank();
-        verify(restaurantTableRepository).save(any(RestaurantTable.class));
+        verify(restaurantTableRepository).saveAndFlush(any(RestaurantTable.class));
+    }
+
+    @Test
+    void createRejectsDuplicatedTableNumber() {
+        when(restaurantTableRepository.existsByNumber(5))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> restaurantTableService.create(new CreateRestaurantTableRequest(5)))
+                .isInstanceOf(RestaurantTableAlreadyExistsException.class);
+
+        verify(restaurantTableRepository, never()).saveAndFlush(any(RestaurantTable.class));
     }
 
     @Test

@@ -1,14 +1,18 @@
 package com.ttip.mesa_agil.integration;
 
 import com.ttip.mesa_agil.controller.RestaurantTableController;
+import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
+import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
+import com.ttip.mesa_agil.handler.GlobalExceptionHandler;
 import com.ttip.mesa_agil.security.jwt.JwtAuthFilter;
 import com.ttip.mesa_agil.service.RestaurantTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,11 +22,14 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import java.net.URI;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(RestaurantTableController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
 public class RestaurantTableControllerTest {
 
     @Autowired
@@ -33,6 +40,72 @@ public class RestaurantTableControllerTest {
 
     @MockitoBean
     JwtAuthFilter jwtAuthFilter;
+
+    @Test
+    void createTable() {
+        when(restaurantTableService.createWithQrInfo(any(CreateRestaurantTableRequest.class)))
+                .thenReturn(new RestaurantTableQrResponse(
+                        1L,
+                        7,
+                        "qr-token",
+                        "http://localhost:8080/tables/qr/qr-token/redirect",
+                        "http://localhost:8080/tables/qr/qr-token/image"
+                ));
+
+        mvc.post()
+                .uri("/tables")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "number": 7
+                        }
+                        """)
+                .exchange()
+                .assertThat()
+                .hasStatus(HttpStatus.CREATED)
+                .bodyJson()
+                .extractingPath("$.tableNumber")
+                .isEqualTo(7);
+
+        verify(restaurantTableService).createWithQrInfo(any(CreateRestaurantTableRequest.class));
+    }
+
+    @Test
+    void createTableRequiresNumber() {
+        mvc.post()
+                .uri("/tables")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+                .exchange()
+                .assertThat()
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson()
+                .extractingPath("$.message")
+                .isEqualTo("Validation error");
+
+        verifyNoInteractions(restaurantTableService);
+    }
+
+    @Test
+    void createTableRejectsDuplicatedNumber() {
+        when(restaurantTableService.createWithQrInfo(any(CreateRestaurantTableRequest.class)))
+                .thenThrow(new RestaurantTableAlreadyExistsException(7));
+
+        mvc.post()
+                .uri("/tables")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "number": 7
+                        }
+                        """)
+                .exchange()
+                .assertThat()
+                .hasStatus(HttpStatus.CONFLICT)
+                .bodyJson()
+                .extractingPath("$.message")
+                .isEqualTo("The table already exists");
+    }
 
     @Test
     void getQrImageInline() {

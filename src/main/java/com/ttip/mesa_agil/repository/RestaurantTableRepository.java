@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface RestaurantTableRepository extends JpaRepository<RestaurantTable, Long> {
+    boolean existsByNumber(Integer number);
+
     boolean existsByQrToken(String qrToken);
 
     Optional<RestaurantTable> findByQrToken(String qrToken);
