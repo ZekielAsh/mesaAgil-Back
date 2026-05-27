@@ -18,6 +18,7 @@ import com.ttip.mesa_agil.model.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ public class OrderService {
         this.menuService = menuService;
     }
 
+    @Transactional
     public OrderResponse create(CreateOrderRequest createOrderRequest) {
         RestaurantTable restaurantTable = restaurantTableService.getTableById(createOrderRequest.tableId());
 
@@ -55,12 +57,19 @@ public class OrderService {
         return OrderMapper.toResponse(order);
     }
 
+    @Transactional
     public void closeOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
                 () -> new OrderNotFoundException(orderId)
         );
 
+        if (order.getStatus() == OrderStatus.CLOSED) {
+            return;
+        }
+
         order.setStatus(OrderStatus.CLOSED);
+        order.setClosedAt(LocalDateTime.now());
+
         orderRepository.save(order);
     }
 
