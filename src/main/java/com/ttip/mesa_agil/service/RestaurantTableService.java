@@ -1,6 +1,7 @@
 package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
+import com.ttip.mesa_agil.dto.requests.UpdateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
@@ -106,16 +107,79 @@ public class RestaurantTableService {
         return qrCodeService.generatePng(buildScanUrl(table.getQrToken()));
     }
 
+    @Transactional
+    public RestaurantTableQrResponse update(Long tableId, UpdateRestaurantTableRequest request) {
+        RestaurantTable table = restaurantTableRepository.findById(tableId)
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
+
+        if (restaurantTableRepository.existsByNumberAndIdNot(request.number(), tableId)) {
+            throw new RestaurantTableAlreadyExistsException(request.number());
+        }
+
+        table.setNumber(request.number());
+
+        try {
+            return toQrResponse(restaurantTableRepository.saveAndFlush(table));
+        } catch (DataIntegrityViolationException ex) {
+            throw new RestaurantTableAlreadyExistsException(request.number());
+        }
+    }
+
+    @Transactional
+    public RestaurantTableQrResponse enable(Long tableId) {
+        RestaurantTable table = restaurantTableRepository.findById(tableId)
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
+
+        table.setEnabled(true);
+
+        if (!orderRepository.existsByTableIdAndStatus(table.getId(), OrderStatus.OPEN)) {
+            createInitialOpenOrder(table);
+        }
+
+        return toQrResponse(restaurantTableRepository.save(table));
+    }
+
+    @Transactional
+    public RestaurantTableQrResponse close(Long tableId) {
+        RestaurantTable table = restaurantTableRepository.findById(tableId)
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
+
+        table.setEnabled(false);
+
+        return toQrResponse(restaurantTableRepository.save(table));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isTableEnabled(Long tableId) {
+        RestaurantTable table = restaurantTableRepository.findById(tableId)
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
+
+        return table.isEnabled();
+    }
+
     @Transactional(readOnly = true)
     public TableSessionResponse resolveSession(String qrToken) {
         RestaurantTable table = restaurantTableRepository.findByQrToken(qrToken)
                 .orElseThrow(() -> new ResourceNotFoundException("Table QR token not found"));
+
+        if (!table.isEnabled()) {
+            return new TableSessionResponse(
+                    table.getId(),
+                    table.getNumber(),
+                    false,
+                    table.getQrToken(),
+                    null,
+                    null,
+                    false
+            );
+        }
 
         return orderRepository.findFirstByTableIdAndStatusOrderByCreatedAtDesc(table.getId(), OrderStatus.OPEN)
                 .map(order -> toActiveSessionResponse(table, order))
                 .orElseGet(() -> new TableSessionResponse(
                         table.getId(),
                         table.getNumber(),
+                        table.isEnabled(),
                         table.getQrToken(),
                         null,
                         null,
@@ -176,6 +240,7 @@ public class RestaurantTableService {
         return new RestaurantTableQrResponse(
                 table.getId(),
                 table.getNumber(),
+                table.isEnabled(),
                 table.getQrToken(),
                 buildScanUrl(table.getQrToken()),
                 buildQrImageUrl(table.getQrToken())
@@ -186,6 +251,7 @@ public class RestaurantTableService {
         return new TableSessionResponse(
                 table.getId(),
                 table.getNumber(),
+                table.isEnabled(),
                 table.getQrToken(),
                 order.getId(),
                 order.getStatus().name(),

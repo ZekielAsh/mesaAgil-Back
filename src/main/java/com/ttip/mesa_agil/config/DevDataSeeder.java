@@ -96,7 +96,7 @@ public class DevDataSeeder implements CommandLineRunner {
         Random random = new Random();
 
         CreateOrderRequest createOrderRequest = new CreateOrderRequest(restaurantTable.getId());
-
+        /*
         for (int i = 0; i < 5; i++) {
             try {
                 OrderResponse order = orderService.create(createOrderRequest);
@@ -109,7 +109,7 @@ public class DevDataSeeder implements CommandLineRunner {
                 System.out.println("Skipping historical order seed: " + exception.getMessage());
                 break;
             }
-        }
+        }*/
 
         createCurrentOpenOrderIfPossible(createOrderRequest, menu, random);
 

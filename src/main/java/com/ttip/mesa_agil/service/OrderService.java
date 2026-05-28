@@ -5,6 +5,7 @@ import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.exception.OrderClosedException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
+import com.ttip.mesa_agil.exception.RestaurantTableClosedException;
 import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.Item;
@@ -38,6 +39,10 @@ public class OrderService {
     @Transactional
     public OrderResponse create(CreateOrderRequest createOrderRequest) {
         RestaurantTable restaurantTable = restaurantTableService.getTableById(createOrderRequest.tableId());
+
+        if (!restaurantTable.isEnabled()) {
+            throw new RestaurantTableClosedException(createOrderRequest.tableId());
+        }
 
         if (orderRepository.existsByTableIdAndStatus(createOrderRequest.tableId(), OrderStatus.OPEN)) {
             throw new TableAlreadyHasOpenOrderException(createOrderRequest.tableId());

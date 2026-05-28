@@ -23,6 +23,9 @@ public class RestaurantTable {
     @Column(nullable = false, unique = true)
     private int number;
 
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     @Column(name = "qr_token", unique = true, length = 36)
     private String qrToken;
 
