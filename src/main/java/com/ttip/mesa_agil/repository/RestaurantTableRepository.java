@@ -8,6 +8,8 @@ import java.util.Optional;
 public interface RestaurantTableRepository extends JpaRepository<RestaurantTable, Long> {
     boolean existsByNumber(Integer number);
 
+    boolean existsByNumberAndIdNot(Integer number, Long id);
+
     boolean existsByQrToken(String qrToken);
 
     Optional<RestaurantTable> findByQrToken(String qrToken);

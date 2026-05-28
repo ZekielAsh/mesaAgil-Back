@@ -1,6 +1,7 @@
 package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
+import com.ttip.mesa_agil.dto.requests.UpdateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
 import com.ttip.mesa_agil.service.RestaurantTableService;
@@ -15,8 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +42,26 @@ public class RestaurantTableController {
             @Valid @RequestBody CreateRestaurantTableRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(restaurantTableService.createWithQrInfo(request));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{tableId}")
+    public ResponseEntity<RestaurantTableQrResponse> update(
+            @PathVariable @Min(1) Long tableId,
+            @Valid @RequestBody UpdateRestaurantTableRequest request) {
+        return ResponseEntity.ok(restaurantTableService.update(tableId, request));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    @PatchMapping("/{tableId}/enable")
+    public ResponseEntity<RestaurantTableQrResponse> enable(@PathVariable @Min(1) Long tableId) {
+        return ResponseEntity.ok(restaurantTableService.enable(tableId));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    @PatchMapping("/{tableId}/close")
+    public ResponseEntity<RestaurantTableQrResponse> close(@PathVariable @Min(1) Long tableId) {
+        return ResponseEntity.ok(restaurantTableService.close(tableId));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -38,7 +38,7 @@ public class DevDataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        if (!menuService.isEmpty()) {
+        /*if (!menuService.isEmpty()) {
             return;
         }
 
@@ -112,7 +112,7 @@ public class DevDataSeeder implements CommandLineRunner {
         }
 
         createCurrentOpenOrderIfPossible(createOrderRequest, menu, random);
-
+*/
         userService.createAdmin("admin", "admin123");
         userService.createKitchen("kitchen", "kitchen123");
         userService.createStaff("staff", "staff123");

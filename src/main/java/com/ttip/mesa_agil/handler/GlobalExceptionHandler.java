@@ -1,11 +1,6 @@
 package com.ttip.mesa_agil.handler;
 
-import com.ttip.mesa_agil.exception.CategoryNotEmptyException;
-import com.ttip.mesa_agil.exception.OrderClosedException;
-import com.ttip.mesa_agil.exception.OrderNotFoundException;
-import com.ttip.mesa_agil.exception.ResourceNotFoundException;
-import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
-import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
+import com.ttip.mesa_agil.exception.*;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +43,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleRestaurantTableAlreadyExists(RestaurantTableAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiError.of("The table already exists", HttpStatus.CONFLICT));
+    }
+
+    @ExceptionHandler(RestaurantTableClosedException.class)
+    public ResponseEntity<ApiError> handleRestaurantTableClosed(RestaurantTableClosedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("The table is closed and does not accept new sessions", HttpStatus.CONFLICT));
     }
 
     @ExceptionHandler(CategoryNotEmptyException.class)
