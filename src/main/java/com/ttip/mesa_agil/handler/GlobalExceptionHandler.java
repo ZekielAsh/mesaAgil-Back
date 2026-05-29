@@ -92,6 +92,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OrderBillRequestException.class)
     public ResponseEntity<ApiError> handleOrderBillRequestException(OrderBillRequestException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiError.of("The bill was not requested ", HttpStatus.CONFLICT));
+                .body(ApiError.of("Current table is requesting bill", HttpStatus.CONFLICT));
+    }
+
+    @ExceptionHandler(OrderBillRequestEmptyException.class)
+    public ResponseEntity<ApiError> handleOrderBillRequestEmptyException(OrderBillRequestEmptyException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("Cannot request a bill for an empty order", HttpStatus.CONFLICT));
     }
 }

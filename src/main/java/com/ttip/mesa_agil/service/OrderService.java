@@ -66,21 +66,19 @@ public class OrderService {
                 () -> new OrderNotFoundException(orderId)
         );
 
-        if (order.getItems().isEmpty()) {
-            throw new OrderBillRequestException(
-                    "The order items cannot be empty"
-            );
-        }
-
         if (order.getStatus() == OrderStatus.CLOSED) {
-            throw new OrderBillRequestException(
-                    "The order is already closed"
-            );
+            throw new OrderClosedException(orderId);
         }
 
         if (!order.isBillRequested()) {
             throw new OrderBillRequestException(
                     "The bill was not requested"
+            );
+        }
+
+        if (order.getItems().isEmpty()) {
+            throw new OrderBillRequestEmptyException(
+                    "The order items cannot be empty"
             );
         }
 
@@ -98,6 +96,12 @@ public class OrderService {
 
         if (order.getStatus() == OrderStatus.CLOSED) {
             throw new OrderClosedException(orderId);
+        }
+
+        if (order.isBillRequested()) {
+            throw new OrderBillRequestException(
+                    "The order is on request bill"
+            );
         }
 
         Map<Long, OrderItem> existingItems = order.getItems().stream()
