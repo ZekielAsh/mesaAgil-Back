@@ -88,4 +88,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiError.of("Validation error", errors));
     }
+
+    @ExceptionHandler(OrderBillRequestException.class)
+    public ResponseEntity<ApiError> handleOrderBillRequestException(OrderBillRequestException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("The bill was not requested ", HttpStatus.CONFLICT));
+    }
 }

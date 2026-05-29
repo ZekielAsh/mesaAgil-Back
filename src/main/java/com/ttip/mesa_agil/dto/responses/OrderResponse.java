@@ -8,6 +8,7 @@ public record OrderResponse(
         Long tableId,
         List<OrderItemResponse> orderItems,
         String status,
+        Boolean billRequested,
         LocalDateTime createdAt,
         LocalDateTime closedAt
 ) { }

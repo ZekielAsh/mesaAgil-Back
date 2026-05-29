@@ -19,6 +19,7 @@ public class OrderMapper {
                 order.getTable().getId(),
                 items,
                 order.getStatus().name(),
+                order.isBillRequested(),
                 order.getCreatedAt(),
                 order.getClosedAt()
         );

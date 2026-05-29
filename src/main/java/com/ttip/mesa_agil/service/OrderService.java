@@ -3,10 +3,7 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
-import com.ttip.mesa_agil.exception.OrderClosedException;
-import com.ttip.mesa_agil.exception.OrderNotFoundException;
-import com.ttip.mesa_agil.exception.RestaurantTableClosedException;
-import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
+import com.ttip.mesa_agil.exception.*;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.model.OrderItem;
@@ -20,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -68,14 +66,28 @@ public class OrderService {
                 () -> new OrderNotFoundException(orderId)
         );
 
-        if (order.getStatus() == OrderStatus.CLOSED) {
-            return;
+        if (order.getItems().isEmpty()) {
+            throw new OrderBillRequestException(
+                    "The order items cannot be empty"
+            );
         }
+
+        if (order.getStatus() == OrderStatus.CLOSED) {
+            throw new OrderBillRequestException(
+                    "The order is already closed"
+            );
+        }
+
+        if (!order.isBillRequested()) {
+            throw new OrderBillRequestException(
+                    "The bill was not requested"
+            );
+        }
+
+        order.setBillRequested(false);
 
         order.setStatus(OrderStatus.CLOSED);
         order.setClosedAt(LocalDateTime.now());
-
-        orderRepository.save(order);
     }
 
     @Transactional
@@ -112,5 +124,26 @@ public class OrderService {
         }
 
         return OrderMapper.toResponse(orderRepository.save(order));
+    }
+
+    @Transactional
+    public void requestBill(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if(order.getItems().isEmpty()) {
+            throw new OrderBillRequestException(
+                    "The order items cannot be empty"
+            );
+        }
+
+        order.setBillRequested(true);
+    }
+
+    public List<OrderResponse> getBillRequests() {
+        return orderRepository.findByBillRequestedTrue()
+                .stream()
+                .map(OrderMapper::toResponse)
+                .toList();
     }
 }
