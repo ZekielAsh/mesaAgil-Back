@@ -92,23 +92,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OrderBillRequestException.class)
     public ResponseEntity<ApiError> handleOrderBillRequestException(OrderBillRequestException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiError.of("Current table is requesting bill", HttpStatus.CONFLICT));
+                .body(ApiError.of("La cuenta ya fue solicitada", HttpStatus.CONFLICT));
     }
 
     @ExceptionHandler(OrderBillRequestEmptyException.class)
     public ResponseEntity<ApiError> handleOrderBillRequestEmptyException(OrderBillRequestEmptyException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiError.of("Cannot request a bill for an empty order", HttpStatus.CONFLICT));
+                .body(ApiError.of("No hay comidas en la orden", HttpStatus.CONFLICT));
     }
 
     @ExceptionHandler(OrderHasUndeliveredItemsException.class)
     public ResponseEntity<ApiError> handleOrderHasUndeliveredItemsException(
             OrderHasUndeliveredItemsException ex) {
-
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiError.of(
-                        ex.getMessage(),
-                        HttpStatus.CONFLICT
-                ));
+                .body(ApiError.of("Hay comidas pendientes", HttpStatus.CONFLICT));
     }
 }
