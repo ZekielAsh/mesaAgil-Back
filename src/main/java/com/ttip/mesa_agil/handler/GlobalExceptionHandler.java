@@ -100,4 +100,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiError.of("Cannot request a bill for an empty order", HttpStatus.CONFLICT));
     }
+
+    @ExceptionHandler(OrderHasUndeliveredItemsException.class)
+    public ResponseEntity<ApiError> handleOrderHasUndeliveredItemsException(
+            OrderHasUndeliveredItemsException ex) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        ex.getMessage(),
+                        HttpStatus.CONFLICT
+                ));
+    }
 }

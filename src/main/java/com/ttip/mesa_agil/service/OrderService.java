@@ -136,8 +136,18 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         if(order.getItems().isEmpty()) {
-            throw new OrderBillRequestException(
+            throw new OrderBillRequestEmptyException(
                     "The order items cannot be empty"
+            );
+        }
+
+        boolean hasPendingItems = order.getItems().stream()
+                .anyMatch(item ->
+                        item.getStatus() != OrderItemStatus.DELIVERED);
+
+        if (hasPendingItems) {
+            throw new OrderHasUndeliveredItemsException(
+                    "There are items that have not been delivered yet"
             );
         }
 

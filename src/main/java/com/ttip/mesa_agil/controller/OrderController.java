@@ -31,7 +31,7 @@ public class OrderController {
 
     @PreAuthorize("hasRole('STAFF')")
     @PatchMapping("/{orderId}/close")
-    public ResponseEntity<OrderResponse> closeOrder(@PathVariable @Min(1) Long orderId) {
+    public ResponseEntity<Void> closeOrder(@PathVariable @Min(1) Long orderId) {
         orderService.closeOrderById(orderId);
         return ResponseEntity.ok().build();
     }
