@@ -3,10 +3,7 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
-import com.ttip.mesa_agil.exception.OrderClosedException;
-import com.ttip.mesa_agil.exception.OrderNotFoundException;
-import com.ttip.mesa_agil.exception.RestaurantTableClosedException;
-import com.ttip.mesa_agil.exception.TableAlreadyHasOpenOrderException;
+import com.ttip.mesa_agil.exception.*;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.model.OrderItem;
@@ -20,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -69,13 +67,25 @@ public class OrderService {
         );
 
         if (order.getStatus() == OrderStatus.CLOSED) {
-            return;
+            throw new OrderClosedException(orderId);
         }
+
+        if (!order.isBillRequested()) {
+            throw new OrderBillRequestException(
+                    "The bill was not requested"
+            );
+        }
+
+        if (order.getItems().isEmpty()) {
+            throw new OrderBillRequestEmptyException(
+                    "The order items cannot be empty"
+            );
+        }
+
+        order.setBillRequested(false);
 
         order.setStatus(OrderStatus.CLOSED);
         order.setClosedAt(LocalDateTime.now());
-
-        orderRepository.save(order);
     }
 
     @Transactional
@@ -86,6 +96,12 @@ public class OrderService {
 
         if (order.getStatus() == OrderStatus.CLOSED) {
             throw new OrderClosedException(orderId);
+        }
+
+        if (order.isBillRequested()) {
+            throw new OrderBillRequestException(
+                    "The order is on request bill"
+            );
         }
 
         Map<Long, OrderItem> existingItems = order.getItems().stream()
@@ -112,5 +128,36 @@ public class OrderService {
         }
 
         return OrderMapper.toResponse(orderRepository.save(order));
+    }
+
+    @Transactional
+    public void requestBill(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if(order.getItems().isEmpty()) {
+            throw new OrderBillRequestEmptyException(
+                    "The order items cannot be empty"
+            );
+        }
+
+        boolean hasPendingItems = order.getItems().stream()
+                .anyMatch(item ->
+                        item.getStatus() != OrderItemStatus.DELIVERED);
+
+        if (hasPendingItems) {
+            throw new OrderHasUndeliveredItemsException(
+                    "There are items that have not been delivered yet"
+            );
+        }
+
+        order.setBillRequested(true);
+    }
+
+    public List<OrderResponse> getBillRequests() {
+        return orderRepository.findByBillRequestedTrue()
+                .stream()
+                .map(OrderMapper::toResponse)
+                .toList();
     }
 }

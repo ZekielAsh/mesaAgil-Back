@@ -72,6 +72,7 @@ public class OrderControllerTest {
                 10L,
                 List.of(orderItem),
                 "OPEN",
+                false,
                 LocalDateTime.now(),
                 null
         );
@@ -127,6 +128,7 @@ public class OrderControllerTest {
                 10L,
                 List.of(orderItem),
                 "OPEN",
+                false,
                 LocalDateTime.now(),
                 null
         );
@@ -171,6 +173,7 @@ public class OrderControllerTest {
                 10L,
                 List.of(orderItem),
                 "OPEN",
+                false,
                 LocalDateTime.now(),
                 null
         );

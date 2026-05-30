@@ -7,8 +7,11 @@ import com.ttip.mesa_agil.service.OrderService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
@@ -26,11 +29,23 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(orderId));
     }
 
-    // Close order solo lo hara el Mozo, el cliente solo solicitara al mozo cerrar mesa.
-    @PostMapping("/{orderId}/close")
-    public ResponseEntity<OrderResponse> closeOrder(@PathVariable @Min(1) Long orderId) {
+    @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{orderId}/close")
+    public ResponseEntity<Void> closeOrder(@PathVariable @Min(1) Long orderId) {
         orderService.closeOrderById(orderId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/bill-requests")
+    public ResponseEntity<List<OrderResponse>> getBillRequests() {
+        return ResponseEntity.ok(orderService.getBillRequests());
+    }
+
+    @PatchMapping("/{id}/request-bill")
+    public ResponseEntity<Void> requestBill(@PathVariable Long id) {
+        orderService.requestBill(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/table/{tableId}")
