@@ -10,6 +10,7 @@ import com.ttip.mesa_agil.repository.FoodCategoryRepository;
 import com.ttip.mesa_agil.repository.MenuRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,6 +38,7 @@ public class MenuService {
         menuRepository.save(item);
     }
 
+    @Transactional
     public MenuResponse getMenu() {
         List<Item> items = menuRepository.findByActiveTrue();
 
@@ -50,7 +52,8 @@ public class MenuService {
                         item.getName(),
                         item.getDescription(),
                         item.getPrice(),
-                        item.getImageUrl()
+                        item.getImageUrl(),
+                        item.getFoodCategory().getName()
                 ))
                 .toList();
 

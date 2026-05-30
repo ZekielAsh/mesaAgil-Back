@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "t_table")
 @Getter
@@ -18,7 +20,19 @@ public class RestaurantTable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private int number;
 
+    @Column(nullable = false)
+    private boolean enabled = true;
+
+    @Column(name = "qr_token", unique = true, length = 36)
+    private String qrToken;
+
+    @PrePersist
+    public void ensureQrToken() {
+        if (qrToken == null || qrToken.isBlank()) {
+            qrToken = UUID.randomUUID().toString();
+        }
+    }
 }

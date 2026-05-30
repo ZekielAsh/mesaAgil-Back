@@ -16,13 +16,16 @@ public class MenuItemDTO {
     private final BigDecimal price;
     @Getter
     private final String imageUrl;
+    @Getter
+    private final String category;
 
-    public MenuItemDTO(Long id, String name, String description, BigDecimal price, String imageUrl) {
+    public MenuItemDTO(Long id, String name, String description, BigDecimal price, String imageUrl, String category) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.price = price;
     this.imageUrl = imageUrl;
+    this.category = category;
     }
 
 }
