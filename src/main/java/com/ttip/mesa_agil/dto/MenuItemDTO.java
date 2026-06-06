@@ -17,7 +17,7 @@ public class MenuItemDTO {
     @Getter
     private final String imageUrl;
     @Getter
-    private final String category;
+    private final String categoryName;
 
     public MenuItemDTO(Long id, String name, String description, BigDecimal price, String imageUrl, String category) {
     this.id = id;
@@ -25,7 +25,7 @@ public class MenuItemDTO {
     this.description = description;
     this.price = price;
     this.imageUrl = imageUrl;
-    this.category = category;
+    this.categoryName = category;
     }
 
 }
