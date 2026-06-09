@@ -19,12 +19,9 @@ public class OrderItemService {
         this.orderItemRepository = orderItemRepository;
     }
 
-    public List<OrderItemResponse> getKitchenOrderItems() {
+    public List<OrderItemResponse> getOrderItemsByStatusList(List<OrderItemStatus> statusList) {
         List<OrderItem> orderItemsList = orderItemRepository.findAllByStatusInOrderByCreatedAtAsc(
-                List.of(
-                        OrderItemStatus.PENDING,
-                        OrderItemStatus.IN_PREPARATION
-                )
+                statusList
         );
 
         return OrderItemMapper.toResponseList(orderItemsList);
