@@ -1,9 +1,6 @@
 package com.ttip.mesa_agil.controller;
 
-import com.ttip.mesa_agil.dto.CategoryRevenueDto;
-import com.ttip.mesa_agil.dto.RevenuePointDto;
-import com.ttip.mesa_agil.dto.TableOrdersDto;
-import com.ttip.mesa_agil.dto.TableRevenueDto;
+import com.ttip.mesa_agil.dto.*;
 import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 import com.ttip.mesa_agil.service.StatsService;
@@ -75,6 +72,28 @@ public class StatsController {
     ) {
         return ResponseEntity.ok(
                 statsService.getTableRevenue(period)
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/items/quantity")
+    public ResponseEntity<List<TopItemDto>>
+    getTopProducts(
+            @RequestParam StatsPeriod period
+    ) {
+        return ResponseEntity.ok(
+                statsService.getTopProducts(period)
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/items/revenue")
+    public ResponseEntity<List<TopRevenueItemDto>>
+    getTopRevenueProducts(
+            @RequestParam StatsPeriod period
+    ) {
+        return ResponseEntity.ok(
+                statsService.getTopRevenueProducts(period)
         );
     }
 }

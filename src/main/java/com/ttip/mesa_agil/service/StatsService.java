@@ -46,32 +46,10 @@ public class StatsService {
                 RoundingMode.HALF_UP
         );
 
-        TopItemDto topProduct = statsRepository
-                .getTopProducts(
-                        range.from(),
-                        range.to()
-                )
-                .stream()
-                .findFirst()
-                .orElse(new TopItemDto("-", 0L));
-
-        TopRevenueItemDto topRevenueProduct = statsRepository
-                .getTopRevenueProducts(
-                        range.from(),
-                        range.to()
-                )
-                .stream()
-                .findFirst()
-                .orElse(new TopRevenueItemDto("-", BigDecimal.ZERO));
-
         return new StatsSummaryResponse(
                 totalRevenue,
                 totalOrders,
-                avgTicket,
-                topProduct.name(),
-                topProduct.total(),
-                topRevenueProduct.name(),
-                topRevenueProduct.totalRevenue()
+                avgTicket
         );
     }
 
@@ -148,5 +126,39 @@ public class StatsService {
                 range.from(),
                 range.to()
         );
+    }
+
+    public List<TopItemDto> getTopProducts(
+            StatsPeriod period
+    ) {
+
+        DateRange range =
+                DateRange.resolvePeriod(period);
+
+        return statsRepository
+                .getTopProducts(
+                        range.from(),
+                        range.to()
+                )
+                .stream()
+                .limit(5)
+                .toList();
+    }
+
+    public List<TopRevenueItemDto> getTopRevenueProducts(
+            StatsPeriod period
+    ) {
+
+        DateRange range =
+                DateRange.resolvePeriod(period);
+
+        return statsRepository
+                .getTopRevenueProducts(
+                        range.from(),
+                        range.to()
+                )
+                .stream()
+                .limit(5)
+                .toList();
     }
 }
