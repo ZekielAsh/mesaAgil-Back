@@ -2,6 +2,7 @@ package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.requests.UpdateOrderItemRequest;
 import com.ttip.mesa_agil.dto.responses.OrderItemResponse;
+import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.service.OrderItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,12 +22,23 @@ public class OrderItemController {
     }
 
     @PreAuthorize("hasRole('KITCHEN')")
-    @GetMapping
+    @GetMapping("/kitchen")
     public ResponseEntity<List<OrderItemResponse>> getKitchenOrderItems() {
-        return ResponseEntity.ok(orderItemService.getKitchenOrderItems());
+        return ResponseEntity.ok(orderItemService.getOrderItemsByStatusList(List.of(
+                OrderItemStatus.PENDING,
+                OrderItemStatus.IN_PREPARATION
+        )));
     }
 
-    @PreAuthorize("hasRole('KITCHEN')")
+    @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/ready")
+    public ResponseEntity<List<OrderItemResponse>> getReadyOrderItems() {
+        return ResponseEntity.ok(orderItemService.getOrderItemsByStatusList(List.of(
+                OrderItemStatus.READY
+        )));
+    }
+
+    @PreAuthorize("hasAnyRole('KITCHEN', 'STAFF')")
     @PatchMapping("/{orderItemId}/status")
     public ResponseEntity<OrderItemResponse> updateOrderItemStatus(
             @PathVariable Long orderItemId,
