@@ -1,8 +1,8 @@
 package com.ttip.mesa_agil.repository;
 
-import com.ttip.mesa_agil.dto.TopItemDto;
-import com.ttip.mesa_agil.dto.TopRevenueItemDto;
+import com.ttip.mesa_agil.dto.*;
 import com.ttip.mesa_agil.model.Order;
+import com.ttip.mesa_agil.model.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -10,8 +10,20 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// TODO: see how to change this to extend to a base class
+
 public interface StatsRepository extends JpaRepository<Order, Long> {
+
+    @Query("""
+    SELECT oi
+    FROM OrderItem oi
+    JOIN FETCH oi.order o
+    WHERE o.status = 'CLOSED'
+    AND o.createdAt BETWEEN :from AND :to
+""")
+    List<OrderItem> getRevenueTimelineData(
+            LocalDateTime from,
+            LocalDateTime to
+    );
 
     @Query("""
         SELECT COALESCE(SUM(oi.unitPrice * oi.quantity), 0)
@@ -19,8 +31,10 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         WHERE oi.order.status = 'CLOSED'
         AND oi.order.createdAt BETWEEN :from AND :to
     """)
-    BigDecimal getTotalRevenue(LocalDateTime from, LocalDateTime to);
-
+    BigDecimal getTotalRevenue(
+            LocalDateTime from,
+            LocalDateTime to
+    );
 
     @Query("""
         SELECT COUNT(o)
@@ -28,7 +42,10 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         WHERE o.status = 'CLOSED'
         AND o.createdAt BETWEEN :from AND :to
     """)
-    Long getTotalOrders(LocalDateTime from, LocalDateTime to);
+    Long getTotalOrders(
+            LocalDateTime from,
+            LocalDateTime to
+    );
 
     @Query("""
         SELECT new com.ttip.mesa_agil.dto.TopItemDto(
@@ -41,18 +58,73 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         GROUP BY oi.item.name
         ORDER BY SUM(oi.quantity) DESC
     """)
-    List<TopItemDto> getTopProducts(LocalDateTime from, LocalDateTime to);
+    List<TopItemDto> getTopProducts(
+            LocalDateTime from,
+            LocalDateTime to
+    );
 
     @Query("""
-    SELECT new com.ttip.mesa_agil.dto.TopRevenueItemDto(
-        oi.item.name,
-        CAST(SUM(oi.unitPrice * oi.quantity) AS BIGDECIMAL)
-    )
-    FROM OrderItem oi
-    WHERE oi.order.status = 'CLOSED'
-    AND oi.order.createdAt BETWEEN :from AND :to
-    GROUP BY oi.item.name
-    ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
-""")
-    List<TopRevenueItemDto> getTopRevenueProducts(LocalDateTime from, LocalDateTime to);
+        SELECT new com.ttip.mesa_agil.dto.TopRevenueItemDto(
+            oi.item.name,
+            SUM(oi.unitPrice * oi.quantity)
+        )
+        FROM OrderItem oi
+        WHERE oi.order.status = 'CLOSED'
+        AND oi.order.createdAt BETWEEN :from AND :to
+        GROUP BY oi.item.name
+        ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
+    """)
+    List<TopRevenueItemDto> getTopRevenueProducts(
+            LocalDateTime from,
+            LocalDateTime to
+    );
+
+    @Query("""
+        SELECT new com.ttip.mesa_agil.dto.CategoryRevenueDto(
+            oi.item.foodCategory.name,
+            SUM(oi.unitPrice * oi.quantity)
+        )
+        FROM OrderItem oi
+        WHERE oi.order.status = 'CLOSED'
+        AND oi.order.createdAt BETWEEN :from AND :to
+        GROUP BY oi.item.foodCategory.name
+        ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
+    """)
+    List<CategoryRevenueDto> getCategoryRevenue(
+            LocalDateTime from,
+            LocalDateTime to
+    );
+
+    @Query("""
+        SELECT new com.ttip.mesa_agil.dto.TableOrdersDto(
+            o.table.number,
+            COUNT(o)
+        )
+        FROM Order o
+        WHERE o.status = 'CLOSED'
+        AND o.createdAt BETWEEN :from AND :to
+        GROUP BY o.table.number
+        ORDER BY COUNT(o) DESC
+    """)
+    List<TableOrdersDto> getTableOrders(
+            LocalDateTime from,
+            LocalDateTime to
+    );
+
+    @Query("""
+        SELECT new com.ttip.mesa_agil.dto.TableRevenueDto(
+            o.table.number,
+            SUM(oi.unitPrice * oi.quantity)
+        )
+        FROM OrderItem oi
+        JOIN oi.order o
+        WHERE o.status = 'CLOSED'
+        AND o.createdAt BETWEEN :from AND :to
+        GROUP BY o.table.number
+        ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
+    """)
+    List<TableRevenueDto> getTableRevenue(
+            LocalDateTime from,
+            LocalDateTime to
+    );
 }
