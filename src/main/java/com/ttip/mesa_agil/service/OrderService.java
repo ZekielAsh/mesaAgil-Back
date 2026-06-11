@@ -3,7 +3,10 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
+import com.ttip.mesa_agil.dto.responses.OrderItemResponse;
+import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.exception.*;
+import com.ttip.mesa_agil.mapper.OrderItemMapper;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.model.OrderItem;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,7 +32,10 @@ public class OrderService {
     private final RestaurantTableService restaurantTableService;
     private final MenuService menuService;
 
-    public OrderService(OrderRepository orderRepository, RestaurantTableService restaurantTableService, MenuService menuService) {
+    public OrderService(
+            OrderRepository orderRepository,
+            RestaurantTableService restaurantTableService,
+            MenuService menuService) {
         this.orderRepository = orderRepository;
         this.restaurantTableService = restaurantTableService;
         this.menuService = menuService;
@@ -61,7 +68,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void closeOrderById(Long orderId) {
+    public OrderResponse closeOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
                 () -> new OrderNotFoundException(orderId)
         );
@@ -86,6 +93,8 @@ public class OrderService {
 
         order.setStatus(OrderStatus.CLOSED);
         order.setClosedAt(LocalDateTime.now());
+
+        return OrderMapper.toResponse(order);
     }
 
     @Transactional
@@ -131,7 +140,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void requestBill(Long orderId) {
+    public OrderResponse requestBill(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -152,6 +161,7 @@ public class OrderService {
         }
 
         order.setBillRequested(true);
+        return OrderMapper.toResponse(order);
     }
 
     public List<OrderResponse> getBillRequests() {
