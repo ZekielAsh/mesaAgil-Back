@@ -3,10 +3,7 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
-import com.ttip.mesa_agil.dto.responses.OrderItemResponse;
-import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.exception.*;
-import com.ttip.mesa_agil.mapper.OrderItemMapper;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.model.OrderItem;
@@ -20,10 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -113,27 +107,18 @@ public class OrderService {
             );
         }
 
-        Map<Long, OrderItem> existingItems = order.getItems().stream()
-                .collect(Collectors.toMap(oi -> oi.getItem().getId(), oi -> oi));
-
         for (CreateOrderItemRequest req : request.orderItemRequestList()) {
 
             Item item = menuService.getItemById(req.itemId());
 
-            OrderItem existing = existingItems.get(req.itemId());
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setItem(item);
+            orderItem.setQuantity(req.quantity());
+            orderItem.setUnitPrice(item.getPrice());
+            orderItem.setStatus(OrderItemStatus.PENDING);
 
-            if (existing != null) {
-                existing.setQuantity(existing.getQuantity() + req.quantity());
-            } else {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(order);
-                orderItem.setItem(item);
-                orderItem.setQuantity(req.quantity());
-                orderItem.setUnitPrice(item.getPrice());
-                orderItem.setStatus(OrderItemStatus.PENDING);
-
-                order.getItems().add(orderItem);
-            }
+            order.getItems().add(orderItem);
         }
 
         return OrderMapper.toResponse(orderRepository.save(order));
