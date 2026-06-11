@@ -1,6 +1,7 @@
 package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.*;
+import com.ttip.mesa_agil.dto.responses.StatsDashboardResponse;
 import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.helper.DateRange;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
@@ -24,10 +25,25 @@ public class StatsService {
         this.statsRepository = statsRepository;
     }
 
-    public StatsSummaryResponse getSummary(StatsPeriod period) {
-
+    public StatsDashboardResponse getDashboard(StatsPeriod period) {
         DateRange range = DateRange.resolvePeriod(period);
 
+        return new StatsDashboardResponse(
+                getSummary(range),
+                getRevenuePoint(range),
+                getCategoryRevenue(range),
+                getTopProducts(range),
+                getTopRevenueProducts(range),
+                getTableOrders(range),
+                getTableRevenue(range)
+        );
+    }
+
+    public StatsSummaryResponse getSummary(StatsPeriod period) {
+        return getSummary(DateRange.resolvePeriod(period));
+    }
+
+    private StatsSummaryResponse getSummary(DateRange range) {
         BigDecimal totalRevenue = statsRepository.getTotalRevenue(
                 range.from(),
                 range.to()
@@ -56,9 +72,10 @@ public class StatsService {
     public List<RevenuePointDto> getRevenuePoint(
             StatsPeriod period
     ) {
+        return getRevenuePoint(DateRange.resolvePeriod(period));
+    }
 
-        DateRange range = DateRange.resolvePeriod(period);
-
+    private List<RevenuePointDto> getRevenuePoint(DateRange range) {
         Map<LocalDate, BigDecimal> revenueByDay =
                 statsRepository.getRevenueTimelineData(
                                 range.from(),
@@ -95,9 +112,10 @@ public class StatsService {
     public List<CategoryRevenueDto> getCategoryRevenue(
             StatsPeriod period
     ) {
+        return getCategoryRevenue(DateRange.resolvePeriod(period));
+    }
 
-        DateRange range = DateRange.resolvePeriod(period);
-
+    private List<CategoryRevenueDto> getCategoryRevenue(DateRange range) {
         return statsRepository.getCategoryRevenue(
                 range.from(),
                 range.to()
@@ -107,9 +125,10 @@ public class StatsService {
     public List<TableOrdersDto> getTableOrders(
             StatsPeriod period
     ) {
+        return getTableOrders(DateRange.resolvePeriod(period));
+    }
 
-        DateRange range = DateRange.resolvePeriod(period);
-
+    private List<TableOrdersDto> getTableOrders(DateRange range) {
         return statsRepository.getTableOrders(
                 range.from(),
                 range.to()
@@ -119,9 +138,10 @@ public class StatsService {
     public List<TableRevenueDto> getTableRevenue(
             StatsPeriod period
     ) {
+        return getTableRevenue(DateRange.resolvePeriod(period));
+    }
 
-        DateRange range = DateRange.resolvePeriod(period);
-
+    private List<TableRevenueDto> getTableRevenue(DateRange range) {
         return statsRepository.getTableRevenue(
                 range.from(),
                 range.to()
@@ -131,10 +151,10 @@ public class StatsService {
     public List<TopItemDto> getTopProducts(
             StatsPeriod period
     ) {
+        return getTopProducts(DateRange.resolvePeriod(period));
+    }
 
-        DateRange range =
-                DateRange.resolvePeriod(period);
-
+    private List<TopItemDto> getTopProducts(DateRange range) {
         return statsRepository
                 .getTopProducts(
                         range.from(),
@@ -148,10 +168,10 @@ public class StatsService {
     public List<TopRevenueItemDto> getTopRevenueProducts(
             StatsPeriod period
     ) {
+        return getTopRevenueProducts(DateRange.resolvePeriod(period));
+    }
 
-        DateRange range =
-                DateRange.resolvePeriod(period);
-
+    private List<TopRevenueItemDto> getTopRevenueProducts(DateRange range) {
         return statsRepository
                 .getTopRevenueProducts(
                         range.from(),

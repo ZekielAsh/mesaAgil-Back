@@ -1,6 +1,7 @@
 package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.*;
+import com.ttip.mesa_agil.dto.responses.StatsDashboardResponse;
 import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 import com.ttip.mesa_agil.service.StatsService;
@@ -21,6 +22,16 @@ public class StatsController {
 
     public StatsController(StatsService statsService) {
         this.statsService = statsService;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/dashboard")
+    public ResponseEntity<StatsDashboardResponse> getDashboard(
+            @RequestParam StatsPeriod period
+    ) {
+        return ResponseEntity.ok(
+                statsService.getDashboard(period)
+        );
     }
 
     @PreAuthorize("hasRole('ADMIN')")
