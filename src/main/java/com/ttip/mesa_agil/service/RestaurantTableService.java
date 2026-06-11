@@ -3,15 +3,17 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.requests.UpdateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
+import com.ttip.mesa_agil.dto.responses.TableOccupancyResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
+import com.ttip.mesa_agil.exception.BusinessException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
 import com.ttip.mesa_agil.mapper.RestaurantTableMapper;
-import com.ttip.mesa_agil.model.Order;
 import com.ttip.mesa_agil.model.RestaurantTable;
+import com.ttip.mesa_agil.model.TableSession;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
-import com.ttip.mesa_agil.repository.OrderRepository;
+import com.ttip.mesa_agil.model.enums.TableStatus;
 import com.ttip.mesa_agil.repository.RestaurantTableRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,31 +22,36 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class RestaurantTableService {
 
     private final RestaurantTableRepository restaurantTableRepository;
-    private final OrderRepository orderRepository;
+    private final TableSessionService tableSessionService;
+    private final OrderService orderService;
     private final QrCodeService qrCodeService;
     private final String scanUrlTemplate;
     private final String qrImageUrlTemplate;
     private final String frontendSessionUrlTemplate;
 
     public RestaurantTableService(RestaurantTableRepository restaurantTableRepository,
-                                  OrderRepository orderRepository,
+                                  TableSessionService tableSessionService,
+                                  OrderService orderService,
                                   QrCodeService qrCodeService,
                                   @Value("${app.qr.scan-url-template:http://localhost:8080/tables/qr/{qrToken}/redirect}") String scanUrlTemplate,
                                   @Value("${app.qr.image-url-template:http://localhost:8080/tables/qr/{qrToken}/image}") String qrImageUrlTemplate,
                                   @Value("${app.qr.frontend-session-url-template:http://localhost:8081/tables/{qrToken}/session}") String frontendSessionUrlTemplate) {
         this.restaurantTableRepository = restaurantTableRepository;
-        this.orderRepository = orderRepository;
+        this.tableSessionService = tableSessionService;
+        this.orderService = orderService;
         this.qrCodeService = qrCodeService;
         this.scanUrlTemplate = scanUrlTemplate;
         this.qrImageUrlTemplate = qrImageUrlTemplate;
         this.frontendSessionUrlTemplate = frontendSessionUrlTemplate;
     }
+
     // TODO: Change to dto once we need to create tables.
     public RestaurantTable getTableById(Long tableId) {
         return restaurantTableRepository.findById(tableId).orElseThrow(
@@ -62,10 +69,7 @@ public class RestaurantTableService {
         table.setQrToken(generateUniqueQrToken());
 
         try {
-            RestaurantTable savedTable = restaurantTableRepository.saveAndFlush(table);
-            createInitialOpenOrder(savedTable);
-
-            return savedTable;
+            return restaurantTableRepository.saveAndFlush(table);
         } catch (DataIntegrityViolationException ex) {
             throw new RestaurantTableAlreadyExistsException(createRestaurantTableRequest.number());
         }
@@ -132,35 +136,40 @@ public class RestaurantTableService {
 
         table.setEnabled(true);
 
-        if (!orderRepository.existsByTableIdAndStatus(table.getId(), OrderStatus.OPEN)) {
-            createInitialOpenOrder(table);
-        }
-
-        return toQrResponse(restaurantTableRepository.save(table));
+        return toQrResponse(
+                restaurantTableRepository.save(table)
+        );
     }
 
     @Transactional
     public RestaurantTableQrResponse close(Long tableId) {
+
         RestaurantTable table = restaurantTableRepository.findById(tableId)
-                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Table not found"));
+
+        if (tableSessionService.hasActiveSession(tableId)) {
+            throw new BusinessException(
+                    "Cannot close an occupied table"
+            );
+        }
 
         table.setEnabled(false);
 
-        return toQrResponse(restaurantTableRepository.save(table));
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isTableEnabled(Long tableId) {
-        RestaurantTable table = restaurantTableRepository.findById(tableId)
-                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
-
-        return table.isEnabled();
+        return toQrResponse(
+                restaurantTableRepository.save(table)
+        );
     }
 
     @Transactional(readOnly = true)
     public TableSessionResponse resolveSession(String qrToken) {
-        RestaurantTable table = restaurantTableRepository.findByQrToken(qrToken)
-                .orElseThrow(() -> new ResourceNotFoundException("Table QR token not found"));
+
+        RestaurantTable table = restaurantTableRepository
+                .findByQrToken(qrToken)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Table QR token not found"
+                        ));
 
         if (!table.isEnabled()) {
             return new TableSessionResponse(
@@ -174,17 +183,36 @@ public class RestaurantTableService {
             );
         }
 
-        return orderRepository.findFirstByTableIdAndStatusOrderByCreatedAtDesc(table.getId(), OrderStatus.OPEN)
-                .map(order -> toActiveSessionResponse(table, order))
-                .orElseGet(() -> new TableSessionResponse(
-                        table.getId(),
-                        table.getNumber(),
-                        table.isEnabled(),
-                        table.getQrToken(),
-                        null,
-                        null,
-                        false
-                ));
+        return tableSessionService
+                .findActiveSession(table.getId())
+                .map(session -> {
+
+                    Long orderId = orderService
+                                    .getOpenOrderBySession(
+                                            session.getId(),
+                                            OrderStatus.OPEN
+                                    ).getId();
+                    return new TableSessionResponse(
+                            table.getId(),
+                            table.getNumber(),
+                            true,
+                            table.getQrToken(),
+                            session.getId(),
+                            orderId,
+                            true
+                    );
+                })
+                .orElseGet(() ->
+                        new TableSessionResponse(
+                                table.getId(),
+                                table.getNumber(),
+                                true,
+                                table.getQrToken(),
+                                null,
+                                null,
+                                false
+                        )
+                );
     }
 
     public URI buildFrontendSessionUri(String qrToken) {
@@ -192,7 +220,11 @@ public class RestaurantTableService {
         String url = frontendSessionUrlTemplate
                 .replace("{qrToken}", session.qrToken())
                 .replace("{tableId}", session.tableId().toString())
-                .replace("{orderId}", session.orderId() == null ? "" : session.orderId().toString());
+                .replace("{sessionId}",
+                        session.sessionId() == null
+                                ? ""
+                                : session.sessionId().toString()
+                );
 
         return URI.create(url);
     }
@@ -225,17 +257,6 @@ public class RestaurantTableService {
         return qrImageUrlTemplate.replace("{qrToken}", qrToken);
     }
 
-    private void createInitialOpenOrder(RestaurantTable table) {
-        if (orderRepository.existsByTableIdAndStatus(table.getId(), OrderStatus.OPEN)) {
-            return;
-        }
-        Order order = new Order();
-        order.setTable(table);
-        order.setStatus(OrderStatus.OPEN);
-
-        orderRepository.save(order);
-    }
-
     private RestaurantTableQrResponse toQrResponse(RestaurantTable table) {
         return new RestaurantTableQrResponse(
                 table.getId(),
@@ -247,15 +268,42 @@ public class RestaurantTableService {
         );
     }
 
-    private TableSessionResponse toActiveSessionResponse(RestaurantTable table, Order order) {
-        return new TableSessionResponse(
+    @Transactional(readOnly = true)
+    public List<TableOccupancyResponse> getOccupancy() {
+
+        List<RestaurantTable> tables =
+                restaurantTableRepository.findAll();
+
+        return tables.stream()
+                .map(this::toOccupancyResponse)
+                .toList();
+    }
+
+    private TableOccupancyResponse toOccupancyResponse(
+            RestaurantTable table
+    ) {
+
+        Optional<TableSession> session =
+                tableSessionService.findActiveSession(
+                        table.getId()
+                );
+
+        TableStatus status;
+
+        if (!table.isEnabled()) {
+            status = TableStatus.CLOSED;
+        } else if (session.isPresent()) {
+            status = TableStatus.OCCUPIED;
+        } else {
+            status = TableStatus.FREE;
+        }
+
+        return new TableOccupancyResponse(
                 table.getId(),
                 table.getNumber(),
-                table.isEnabled(),
-                table.getQrToken(),
-                order.getId(),
-                order.getStatus().name(),
-                true
+                status,
+                session.map(TableSession::getCustomerCount).orElse(0),
+                session.map(TableSession::getId).orElse(null)
         );
     }
 }

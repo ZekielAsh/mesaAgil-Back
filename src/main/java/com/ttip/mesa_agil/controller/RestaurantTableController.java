@@ -3,6 +3,7 @@ package com.ttip.mesa_agil.controller;
 import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.requests.UpdateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
+import com.ttip.mesa_agil.dto.responses.TableOccupancyResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
 import com.ttip.mesa_agil.service.RestaurantTableService;
 import jakarta.validation.Valid;
@@ -117,5 +118,13 @@ public class RestaurantTableController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(sessionUri)
                 .build();
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/occupancy")
+    public ResponseEntity<List<TableOccupancyResponse>> getOccupancy() {
+        return ResponseEntity.ok(
+                restaurantTableService.getOccupancy()
+        );
     }
 }

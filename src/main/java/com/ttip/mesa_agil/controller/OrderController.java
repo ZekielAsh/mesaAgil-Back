@@ -1,7 +1,6 @@
 package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.service.OrderService;
 import jakarta.validation.Valid;
@@ -46,11 +45,6 @@ public class OrderController {
     public ResponseEntity<Void> requestBill(@PathVariable Long id) {
         orderService.requestBill(id);
         return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/table/{tableId}")
-    public ResponseEntity<OrderResponse> create(@PathVariable @Min(1) Long tableId) {
-        return ResponseEntity.ok(orderService.create(new CreateOrderRequest(tableId)));
     }
 
     @PostMapping("/{orderId}/items")

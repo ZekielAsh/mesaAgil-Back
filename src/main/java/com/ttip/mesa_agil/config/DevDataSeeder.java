@@ -88,65 +88,8 @@ public class DevDataSeeder implements CommandLineRunner {
 
         System.out.println("Items cargados");
 
-        CreateRestaurantTableRequest createRestaurantTableRequest = new CreateRestaurantTableRequest(1);
-        RestaurantTable restaurantTable = restaurantTableService.create(createRestaurantTableRequest);
-
-        List<MenuItemDTO> menu = menuService.getMenu().getItems();
-
-        Random random = new Random();
-
-        CreateOrderRequest createOrderRequest = new CreateOrderRequest(restaurantTable.getId());
-        /*
-        for (int i = 0; i < 5; i++) {
-            try {
-                OrderResponse order = orderService.create(createOrderRequest);
-
-                List<CreateOrderItemRequest> orderItemRequestList = createRandomOrderItems(menu, random);
-
-                orderService.addItems(order.id(), new CreateOrderItemsRequest(orderItemRequestList));
-                orderService.closeOrderById(order.id());
-            } catch (TableAlreadyHasOpenOrderException exception) {
-                System.out.println("Skipping historical order seed: " + exception.getMessage());
-                break;
-            }
-        }*/
-
-        createCurrentOpenOrderIfPossible(createOrderRequest, menu, random);
-
         userService.createAdmin("admin", "admin123");
         userService.createKitchen("kitchen", "kitchen123");
         userService.createStaff("staff", "staff123");
-    }
-
-    private void createCurrentOpenOrderIfPossible(CreateOrderRequest createOrderRequest, List<MenuItemDTO> menu, Random random) {
-        try {
-            OrderResponse actualOrder = orderService.create(createOrderRequest);
-
-            List<CreateOrderItemRequest> initialItems = menu.stream()
-                    .limit(3)
-                    .map(menuItemDTO -> new CreateOrderItemRequest(menuItemDTO.getId(), 1))
-                    .toList();
-
-            orderService.addItems(actualOrder.id(), new CreateOrderItemsRequest(initialItems));
-
-            List<CreateOrderItemRequest> randomItems = createRandomOrderItems(menu, random);
-
-            orderService.addItems(actualOrder.id(), new CreateOrderItemsRequest(randomItems));
-        } catch (TableAlreadyHasOpenOrderException exception) {
-            System.out.println("Skipping current open order seed: " + exception.getMessage());
-        }
-    }
-
-    private List<CreateOrderItemRequest> createRandomOrderItems(List<MenuItemDTO> menu, Random random) {
-        List<CreateOrderItemRequest> orderItemRequestList = new ArrayList<>();
-
-        for (MenuItemDTO menuItemDTO : menu) {
-            orderItemRequestList.add(new CreateOrderItemRequest(
-                    menuItemDTO.getId(),
-                    1 + random.nextInt(10)
-            ));
-        }
-
-        return orderItemRequestList;
     }
 }
