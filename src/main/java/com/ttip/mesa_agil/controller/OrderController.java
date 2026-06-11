@@ -3,7 +3,9 @@ package com.ttip.mesa_agil.controller;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
+import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.service.OrderService;
+import com.ttip.mesa_agil.service.WebSocketNotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +21,11 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final WebSocketNotificationService notificationService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, WebSocketNotificationService notificationService) {
         this.orderService = orderService;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/{orderId}")
@@ -32,7 +36,11 @@ public class OrderController {
     @PreAuthorize("hasRole('STAFF')")
     @PatchMapping("/{orderId}/close")
     public ResponseEntity<Void> closeOrder(@PathVariable @Min(1) Long orderId) {
-        orderService.closeOrderById(orderId);
+        OrderResponse orderResponse = orderService.closeOrderById(orderId);
+        notificationService.send(
+                "/room/table/" + orderResponse.tableId(),
+                new WebSocketEvent("ORDER_CLOSED", orderId)
+        );
         return ResponseEntity.ok().build();
     }
 
@@ -44,7 +52,11 @@ public class OrderController {
 
     @PatchMapping("/{id}/request-bill")
     public ResponseEntity<Void> requestBill(@PathVariable Long id) {
-        orderService.requestBill(id);
+        OrderResponse orderResponse = orderService.requestBill(id);
+        notificationService.send(
+                "/room/staff",
+                new WebSocketEvent("BILL_REQUESTED", orderResponse)
+        );
         return ResponseEntity.ok().build();
     }
 
@@ -56,7 +68,15 @@ public class OrderController {
     @PostMapping("/{orderId}/items")
     public ResponseEntity<OrderResponse> addItems(@PathVariable @Min(1) Long orderId,
                                                   @Valid @RequestBody CreateOrderItemsRequest createOrderItemsRequest) {
-        return ResponseEntity.ok(orderService.addItems(orderId, createOrderItemsRequest));
+        OrderResponse orderResponse = orderService.addItems(orderId, createOrderItemsRequest);
+        notificationService.send(
+                "/room/kitchen",
+                new WebSocketEvent(
+                        "ORDER_ITEMS_ADDED",
+                        orderResponse
+                )
+        );
+        return ResponseEntity.ok(orderResponse);
     }
 
 }
