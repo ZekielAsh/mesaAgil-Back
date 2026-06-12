@@ -56,6 +56,7 @@ public class OrderService {
         tableSessionService.closeSession(
                 order.getTable().getId()
         );
+        return OrderMapper.toResponse(orderRepository.save(order));
     }
 
     @Transactional
