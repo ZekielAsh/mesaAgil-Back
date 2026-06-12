@@ -3,10 +3,10 @@ package com.ttip.mesa_agil.dto.responses;
 public record TableSessionResponse(
         Long tableId,
         Integer tableNumber,
-        Boolean enabled,
+        boolean tableEnabled,
         String qrToken,
         Long sessionId,
         Long orderId,
-        Boolean active
+        boolean activeSession
 ) {
 }
