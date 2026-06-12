@@ -14,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -39,7 +37,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void closeOrderById(Long orderId) {
+    public OrderResponse closeOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
                 () -> new OrderNotFoundException(orderId)
         );
@@ -54,7 +52,7 @@ public class OrderService {
 
         order.setStatus(OrderStatus.CLOSED);
         order.setClosedAt(LocalDateTime.now());
-        
+
         tableSessionService.closeSession(
                 order.getTable().getId()
         );
@@ -70,34 +68,25 @@ public class OrderService {
 
         if (order.isBillRequested()) { throw new OrderBillRequestException("The order is on request bill"); }
 
-        Map<Long, OrderItem> existingItems = order.getItems().stream()
-                .collect(Collectors.toMap(oi -> oi.getItem().getId(), oi -> oi));
-
         for (CreateOrderItemRequest req : request.orderItemRequestList()) {
 
             Item item = menuService.getItemById(req.itemId());
 
-            OrderItem existing = existingItems.get(req.itemId());
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setItem(item);
+            orderItem.setQuantity(req.quantity());
+            orderItem.setUnitPrice(item.getPrice());
+            orderItem.setStatus(OrderItemStatus.PENDING);
 
-            if (existing != null) {
-                existing.setQuantity(existing.getQuantity() + req.quantity());
-            } else {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(order);
-                orderItem.setItem(item);
-                orderItem.setQuantity(req.quantity());
-                orderItem.setUnitPrice(item.getPrice());
-                orderItem.setStatus(OrderItemStatus.PENDING);
-
-                order.getItems().add(orderItem);
-            }
+            order.getItems().add(orderItem);
         }
 
         return OrderMapper.toResponse(orderRepository.save(order));
     }
 
     @Transactional
-    public void requestBill(Long orderId) {
+    public OrderResponse requestBill(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -114,6 +103,7 @@ public class OrderService {
         }
 
         order.setBillRequested(true);
+        return OrderMapper.toResponse(order);
     }
 
     public List<OrderResponse> getBillRequests() {
