@@ -23,7 +23,6 @@ import java.util.stream.IntStream;
 @Component
 public class DevDataSeeder implements CommandLineRunner {
 
-    private final OrderService orderService;
     private final RestaurantTableService restaurantTableService;
     private final MenuService menuService;
     private final FoodCategoryService foodCategoryService;
@@ -31,13 +30,11 @@ public class DevDataSeeder implements CommandLineRunner {
     private final OrderRepository orderRepository;
 
     public DevDataSeeder(
-            OrderService orderService,
             RestaurantTableService restaurantTableService,
             MenuService menuService,
             FoodCategoryService foodCategoryService,
             UserService userService,
             OrderRepository orderRepository) {
-        this.orderService = orderService;
         this.restaurantTableService = restaurantTableService;
         this.menuService = menuService;
         this.foodCategoryService = foodCategoryService;
@@ -54,7 +51,7 @@ public class DevDataSeeder implements CommandLineRunner {
 
         seedUsers();
 
-        /*--------------*/
+        
         List<RestaurantTable> restaurantTableList = IntStream.rangeClosed(1, 10)
                 .mapToObj(number ->
                         restaurantTableService.create(
@@ -62,11 +59,11 @@ public class DevDataSeeder implements CommandLineRunner {
                         )
                 )
                 .toList();
-        /*--------------*/
+        
         List<MenuItemDTO> menu = menuService.getMenu().getItems();
 
         Random random = new Random();
-        /*--------------*/
+        
         restaurantTableList.forEach(table -> {
             for (int i = 0; i < 3; i++) {
                 createHistoricalOrder(
@@ -77,7 +74,7 @@ public class DevDataSeeder implements CommandLineRunner {
                 );
             }
         });
-        /*--------------*/
+        
     }
 
     private void createHistoricalOrder(
@@ -141,7 +138,6 @@ public class DevDataSeeder implements CommandLineRunner {
     }
 
     private void seedMenu() {
-        // Seeds the menu with categories and items.
 
         FoodCategory food = foodCategoryService.create("Comidas");
         FoodCategory drinks = foodCategoryService.create("Bebidas");
