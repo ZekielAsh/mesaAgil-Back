@@ -1,7 +1,6 @@
 package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.service.OrderService;
@@ -58,11 +57,6 @@ public class OrderController {
                 new WebSocketEvent("BILL_REQUESTED", orderResponse)
         );
         return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/table/{tableId}")
-    public ResponseEntity<OrderResponse> create(@PathVariable @Min(1) Long tableId) {
-        return ResponseEntity.ok(orderService.create(new CreateOrderRequest(tableId)));
     }
 
     @PostMapping("/{orderId}/items")

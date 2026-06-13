@@ -2,17 +2,13 @@ package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.exception.*;
 import com.ttip.mesa_agil.mapper.OrderMapper;
-import com.ttip.mesa_agil.model.Item;
-import com.ttip.mesa_agil.model.OrderItem;
-import com.ttip.mesa_agil.model.RestaurantTable;
+import com.ttip.mesa_agil.model.*;
 import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.repository.OrderRepository;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
-import com.ttip.mesa_agil.model.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,34 +19,13 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final RestaurantTableService restaurantTableService;
     private final MenuService menuService;
+    private final TableSessionService tableSessionService;
 
-    public OrderService(
-            OrderRepository orderRepository,
-            RestaurantTableService restaurantTableService,
-            MenuService menuService) {
+    public OrderService(OrderRepository orderRepository, MenuService menuService, TableSessionService tableSessionService) {
         this.orderRepository = orderRepository;
-        this.restaurantTableService = restaurantTableService;
         this.menuService = menuService;
-    }
-
-    @Transactional
-    public OrderResponse create(CreateOrderRequest createOrderRequest) {
-        RestaurantTable restaurantTable = restaurantTableService.getTableById(createOrderRequest.tableId());
-
-        if (!restaurantTable.isEnabled()) {
-            throw new RestaurantTableClosedException(createOrderRequest.tableId());
-        }
-
-        if (orderRepository.existsByTableIdAndStatus(createOrderRequest.tableId(), OrderStatus.OPEN)) {
-            throw new TableAlreadyHasOpenOrderException(createOrderRequest.tableId());
-        }
-
-        Order order = OrderMapper.toEntity(restaurantTable);
-        order.setStatus(OrderStatus.OPEN);
-
-        return OrderMapper.toResponse(orderRepository.save(order));
+        this.tableSessionService = tableSessionService;
     }
 
     public OrderResponse getOrderById(Long orderId) {
@@ -67,28 +42,21 @@ public class OrderService {
                 () -> new OrderNotFoundException(orderId)
         );
 
-        if (order.getStatus() == OrderStatus.CLOSED) {
-            throw new OrderClosedException(orderId);
-        }
+        if (order.getStatus() == OrderStatus.CLOSED) { throw new OrderClosedException(orderId); }
 
-        if (!order.isBillRequested()) {
-            throw new OrderBillRequestException(
-                    "The bill was not requested"
-            );
-        }
+        if (!order.isBillRequested()) { throw new OrderBillRequestException("The bill was not requested");}
 
-        if (order.getItems().isEmpty()) {
-            throw new OrderBillRequestEmptyException(
-                    "The order items cannot be empty"
-            );
-        }
+        if (order.getItems().isEmpty()) { throw new OrderBillRequestEmptyException("The order items cannot be empty"); }
 
         order.setBillRequested(false);
 
         order.setStatus(OrderStatus.CLOSED);
         order.setClosedAt(LocalDateTime.now());
 
-        return OrderMapper.toResponse(order);
+        tableSessionService.closeSession(
+                order.getTable().getId()
+        );
+        return OrderMapper.toResponse(orderRepository.save(order));
     }
 
     @Transactional
@@ -97,15 +65,9 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (order.getStatus() == OrderStatus.CLOSED) {
-            throw new OrderClosedException(orderId);
-        }
+        if (order.getStatus() == OrderStatus.CLOSED) { throw new OrderClosedException(orderId); }
 
-        if (order.isBillRequested()) {
-            throw new OrderBillRequestException(
-                    "The order is on request bill"
-            );
-        }
+        if (order.isBillRequested()) { throw new OrderBillRequestException("The order is on request bill"); }
 
         for (CreateOrderItemRequest req : request.orderItemRequestList()) {
 
@@ -130,9 +92,7 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         if(order.getItems().isEmpty()) {
-            throw new OrderBillRequestEmptyException(
-                    "The order items cannot be empty"
-            );
+            throw new OrderBillRequestEmptyException("The order items cannot be empty");
         }
 
         boolean hasPendingItems = order.getItems().stream()
@@ -140,9 +100,7 @@ public class OrderService {
                         item.getStatus() != OrderItemStatus.DELIVERED);
 
         if (hasPendingItems) {
-            throw new OrderHasUndeliveredItemsException(
-                    "There are items that have not been delivered yet"
-            );
+            throw new OrderHasUndeliveredItemsException("There are items that have not been delivered yet");
         }
 
         order.setBillRequested(true);
@@ -154,5 +112,10 @@ public class OrderService {
                 .stream()
                 .map(OrderMapper::toResponse)
                 .toList();
+    }
+
+    public Order getOpenOrderBySession(Long sessionId, OrderStatus status) {
+        return orderRepository.findByTableSessionIdAndStatus(sessionId, status)
+                .orElseThrow(() -> new BusinessException("No order found for session id: " + sessionId + " and status: " + status));
     }
 }
