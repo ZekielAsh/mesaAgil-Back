@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/menu/**").permitAll()
                         .requestMatchers("/orders/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tables/qr/**").permitAll()
                         .anyRequest().authenticated()
                 )

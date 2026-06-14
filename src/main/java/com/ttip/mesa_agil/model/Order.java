@@ -37,6 +37,10 @@ public class Order {
     @Column(nullable = false)
     private boolean billRequested = false;
 
+    @ManyToOne
+    @JoinColumn(name = "table_session_id")
+    private TableSession tableSession;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -45,6 +49,8 @@ public class Order {
 
     @PrePersist
     public void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 }
