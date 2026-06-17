@@ -39,16 +39,27 @@ public class UserService {
             throw new BusinessException("Password too short");
         }
 
-        try {
-            User user = new User();
-            user.setUsername(username);
-            user.setPassword(passwordEncoder.encode(password));
-            user.setRole(userRole);
-
-            userRepository.save(user);
-        } catch (DataIntegrityViolationException e) {
-            // Probar errores, si es posible usar UserAlreadyExistsException
-            throw new BusinessException("User already exists", e);
+        if (this.existsByUsername(username)) {
+            throw new BusinessException("User already exists");
         }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(userRole);
+
+        userRepository.save(user);
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Transactional
+    public void createIfNotExists(String username, String password, UserRole role) {
+        if (userRepository.existsByUsername(username)) {
+            return;
+        }
+        createUser(username, password, role);
     }
 }

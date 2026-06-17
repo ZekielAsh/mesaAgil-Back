@@ -3,12 +3,14 @@ package com.ttip.mesa_agil.config;
 import com.ttip.mesa_agil.dto.*;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
-import com.ttip.mesa_agil.dto.requests.CreateOrderRequest;
 import com.ttip.mesa_agil.dto.requests.CreateRestaurantTableRequest;
 import com.ttip.mesa_agil.model.*;
 import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
+import com.ttip.mesa_agil.model.enums.UserRole;
 import com.ttip.mesa_agil.repository.OrderRepository;
+import com.ttip.mesa_agil.repository.RestaurantTableRepository;
+import com.ttip.mesa_agil.repository.TableSessionRepository;
 import com.ttip.mesa_agil.service.*;
 import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
@@ -16,6 +18,7 @@ import org.springframework.boot.CommandLineRunner;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -27,6 +30,9 @@ public class DevDataSeeder implements CommandLineRunner {
     private final MenuService menuService;
     private final FoodCategoryService foodCategoryService;
     private final UserService userService;
+
+    private final RestaurantTableRepository restaurantTableRepository;
+    private final TableSessionRepository tableSessionRepository;
     private final OrderRepository orderRepository;
 
     public DevDataSeeder(
@@ -34,11 +40,16 @@ public class DevDataSeeder implements CommandLineRunner {
             MenuService menuService,
             FoodCategoryService foodCategoryService,
             UserService userService,
-            OrderRepository orderRepository) {
+            RestaurantTableRepository restaurantTableRepository,
+            TableSessionRepository tableSessionRepository,
+            OrderRepository orderRepository
+    ) {
         this.restaurantTableService = restaurantTableService;
         this.menuService = menuService;
         this.foodCategoryService = foodCategoryService;
         this.userService = userService;
+        this.restaurantTableRepository = restaurantTableRepository;
+        this.tableSessionRepository = tableSessionRepository;
         this.orderRepository = orderRepository;
     }
 
@@ -49,92 +60,250 @@ public class DevDataSeeder implements CommandLineRunner {
             seedMenu();
         }
 
-        seedUsers();
-
-        
-        List<RestaurantTable> restaurantTableList = IntStream.rangeClosed(1, 10)
-                .mapToObj(number ->
-                        restaurantTableService.create(
-                                new CreateRestaurantTableRequest(number)
-                        )
-                )
-                .toList();
-        
-        List<MenuItemDTO> menu = menuService.getMenu().getItems();
-
-        Random random = new Random();
-        
-        restaurantTableList.forEach(table -> {
-            for (int i = 0; i < 3; i++) {
-                createHistoricalOrder(
-                        new CreateOrderRequest(table.getId()),
-                        menu,
-                        random,
-                        LocalDateTime.now().minusDays(30)
-                );
-            }
-        });
-        
-    }
-
-    private void createHistoricalOrder(
-            CreateOrderRequest createOrderRequest,
-            List<MenuItemDTO> menu,
-            Random random,
-            LocalDateTime date) {
-        Order actualOrder = createOrderWithDate(createOrderRequest.tableId(), date);
-
-        List<CreateOrderItemRequest> randomItems = createRandomOrderItems(menu, random);
-        addItemsWithDate(actualOrder, new CreateOrderItemsRequest(randomItems), date);
-
-        actualOrder.setBillRequested(false);
-        actualOrder.setStatus(OrderStatus.CLOSED);
-        actualOrder.setClosedAt(LocalDateTime.now().minusDays(30).plusHours(1));
-
-        orderRepository.save(actualOrder);
-    }
-
-    private List<CreateOrderItemRequest> createRandomOrderItems(List<MenuItemDTO> menu, Random random) {
-        List<CreateOrderItemRequest> orderItemRequestList = new ArrayList<>();
-
-        for (MenuItemDTO menuItemDTO : menu) {
-            orderItemRequestList.add(new CreateOrderItemRequest(
-                    menuItemDTO.getId(),
-                    1 + random.nextInt(10)
-            ));
+        if (restaurantTableRepository.count() == 0) {
+            seedTables();
         }
 
-        return orderItemRequestList;
+        seedUsersIfNeeded();
+
+        if (orderRepository.count() == 0) {
+            seedHistoricalData();
+        }
     }
 
-    private Order createOrderWithDate(Long tableId, LocalDateTime date) {
-        RestaurantTable table = restaurantTableService.getTableById(tableId);
+    private void seedTables() {
+
+        IntStream.rangeClosed(1, 10)
+                .forEach(number ->
+                        restaurantTableService.create(
+                                new CreateRestaurantTableRequest(number)
+                        ));
+    }
+
+    private void seedUsersIfNeeded() {
+        userService.createIfNotExists(
+                "admin",
+                "admin123",
+                UserRole.ADMIN
+        );
+
+        userService.createIfNotExists(
+                "kitchen",
+                "kitchen123",
+                UserRole.KITCHEN
+        );
+
+        userService.createIfNotExists(
+                "staff",
+                "staff123",
+                UserRole.STAFF
+        );
+    }
+
+    private void seedHistoricalData() {
+
+        List<RestaurantTable> tables =
+                restaurantTableRepository.findAll();
+
+        List<MenuItemDTO> menu =
+                menuService.getMenu().getItems();
+
+        Random random = new Random();
+
+        for (RestaurantTable table : tables) {
+
+            int ordersCount =
+                    10 + random.nextInt(15);
+
+            for (int i = 0; i < ordersCount; i++) {
+
+                LocalDateTime orderDate =
+                        LocalDateTime.now()
+                                .minusDays(
+                                        random.nextInt(90)
+                                )
+                                .minusHours(
+                                        random.nextInt(24)
+                                );
+
+                createHistoricalSessionAndOrder(
+                        table,
+                        menu,
+                        random,
+                        orderDate
+                );
+            }
+        }
+    }
+
+    private void createHistoricalSessionAndOrder(
+            RestaurantTable table,
+            List<MenuItemDTO> menu,
+            Random random,
+            LocalDateTime date
+    ) {
+
+        TableSession session =
+                createHistoricalSession(
+                        table,
+                        date,
+                        random
+                );
+
+        if (Boolean.TRUE.equals(session.getActive())) {
+            throw new IllegalStateException(
+                    "Historical session was persisted as active"
+            );
+        }
+
+        Order order =
+                createHistoricalOrder(
+                        session,
+                        date
+                );
+
+        List<CreateOrderItemRequest> items =
+                createRandomOrderItems(
+                        menu,
+                        random
+                );
+
+        addItemsWithDate(
+                order,
+                new CreateOrderItemsRequest(items),
+                date
+        );
+
+        orderRepository.save(order);
+    }
+
+    private TableSession createHistoricalSession(
+            RestaurantTable table,
+            LocalDateTime date,
+            Random random
+    ) {
+
+        TableSession session =
+                new TableSession();
+
+        session.setTable(table);
+
+        session.setCustomerCount(
+                random.nextInt(6) + 1
+        );
+
+        session.setActive(false);
+
+        session.setStartedAt(date);
+
+        session.setEndedAt(
+                date.plusMinutes(
+                        30 + random.nextInt(120)
+                )
+        );
+
+        return tableSessionRepository.save(session);
+    }
+
+    private Order createHistoricalOrder(
+            TableSession session,
+            LocalDateTime date
+    ) {
 
         Order order = new Order();
-        order.setTable(table);
-        order.setStatus(OrderStatus.CLOSED);
+
+        order.setTable(
+                session.getTable()
+        );
+
+        order.setTableSession(
+                session
+        );
+
+        order.setStatus(
+                OrderStatus.CLOSED
+        );
+
+        order.setBillRequested(
+                false
+        );
+
         order.setCreatedAt(date);
-        order.setBillRequested(true);
+
+        order.setClosedAt(
+                session.getEndedAt()
+        );
 
         return orderRepository.save(order);
     }
 
-    private void addItemsWithDate(Order order, CreateOrderItemsRequest request, LocalDateTime date) {
-        for (CreateOrderItemRequest req : request.orderItemRequestList()) {
-            Item item = menuService.getItemById(req.itemId());
+    private List<CreateOrderItemRequest> createRandomOrderItems(
+            List<MenuItemDTO> menu,
+            Random random
+    ) {
 
-            OrderItem orderItem = new OrderItem();
+        int itemsCount =
+                1 + random.nextInt(
+                        Math.min(
+                                4,
+                                menu.size()
+                        )
+                );
+
+        List<MenuItemDTO> shuffled =
+                new ArrayList<>(menu);
+
+        Collections.shuffle(
+                shuffled,
+                random
+        );
+
+        return shuffled.stream()
+                .limit(itemsCount)
+                .map(item ->
+                        new CreateOrderItemRequest(
+                                item.getId(),
+                                1 + random.nextInt(5)
+                        )
+                )
+                .toList();
+    }
+
+    private void addItemsWithDate(
+            Order order,
+            CreateOrderItemsRequest request,
+            LocalDateTime date
+    ) {
+
+        for (CreateOrderItemRequest req :
+                request.orderItemRequestList()) {
+
+            Item item =
+                    menuService.getItemById(
+                            req.itemId()
+                    );
+
+            OrderItem orderItem =
+                    new OrderItem();
+
             orderItem.setOrder(order);
             orderItem.setItem(item);
-            orderItem.setQuantity(req.quantity());
-            orderItem.setUnitPrice(item.getPrice());
-            orderItem.setStatus(OrderItemStatus.DELIVERED);
-            orderItem.setCreatedAt(date);
+            orderItem.setQuantity(
+                    req.quantity()
+            );
+            orderItem.setUnitPrice(
+                    item.getPrice()
+            );
+            orderItem.setStatus(
+                    OrderItemStatus.DELIVERED
+            );
+            orderItem.setCreatedAt(
+                    date
+            );
 
-            order.getItems().add(orderItem);
+            order.getItems()
+                    .add(orderItem);
         }
-
-        orderRepository.save(order);
     }
 
     private void seedMenu() {
@@ -182,11 +351,5 @@ public class DevDataSeeder implements CommandLineRunner {
                 new BigDecimal("1800.0"),
                 dessert.getId()
         );
-    }
-
-    private void seedUsers() {
-        userService.createAdmin("admin", "admin123");
-        userService.createKitchen("kitchen", "kitchen123");
-        userService.createStaff("staff", "staff123");
     }
 }

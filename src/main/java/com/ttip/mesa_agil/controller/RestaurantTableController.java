@@ -53,13 +53,13 @@ public class RestaurantTableController {
         return ResponseEntity.ok(restaurantTableService.update(tableId, request));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @PatchMapping("/{tableId}/enable")
     public ResponseEntity<RestaurantTableQrResponse> enable(@PathVariable @Min(1) Long tableId) {
         return ResponseEntity.ok(restaurantTableService.enable(tableId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @PatchMapping("/{tableId}/close")
     public ResponseEntity<RestaurantTableQrResponse> close(@PathVariable @Min(1) Long tableId) {
         return ResponseEntity.ok(restaurantTableService.close(tableId));
