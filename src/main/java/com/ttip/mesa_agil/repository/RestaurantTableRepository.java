@@ -15,5 +15,7 @@ public interface RestaurantTableRepository extends JpaRepository<RestaurantTable
 
     Optional<RestaurantTable> findByQrToken(String qrToken);
 
+    boolean existsByIdAndAssignedStaffId(Long tableId, Long staffId);
+
     List<RestaurantTable> findAllByAssignedStaffId(Long staffId);
 }

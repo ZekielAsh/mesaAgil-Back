@@ -9,6 +9,7 @@ import com.ttip.mesa_agil.exception.BusinessException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
+import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.RestaurantTableMapper;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.TableSession;
@@ -16,11 +17,8 @@ import com.ttip.mesa_agil.model.User;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.model.enums.TableStatus;
 import com.ttip.mesa_agil.repository.RestaurantTableRepository;
-import com.ttip.mesa_agil.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +34,7 @@ public class RestaurantTableService {
     private final TableSessionService tableSessionService;
     private final OrderService orderService;
     private final QrCodeService qrCodeService;
-    private final UserRepository userRepository;
+    private final TableAssignmentValidator tableAssignmentValidator;
     private final String scanUrlTemplate;
     private final String qrImageUrlTemplate;
     private final String frontendSessionUrlTemplate;
@@ -45,7 +43,7 @@ public class RestaurantTableService {
                                   TableSessionService tableSessionService,
                                   OrderService orderService,
                                   QrCodeService qrCodeService,
-                                  UserRepository userRepository,
+                                  TableAssignmentValidator tableAssignmentValidator,
                                   @Value("${app.qr.scan-url-template:http://localhost:8080/tables/qr/{qrToken}/redirect}") String scanUrlTemplate,
                                   @Value("${app.qr.image-url-template:http://localhost:8080/tables/qr/{qrToken}/image}") String qrImageUrlTemplate,
                                   @Value("${app.qr.frontend-session-url-template:http://localhost:8081/tables/{qrToken}/session}") String frontendSessionUrlTemplate) {
@@ -53,7 +51,7 @@ public class RestaurantTableService {
         this.tableSessionService = tableSessionService;
         this.orderService = orderService;
         this.qrCodeService = qrCodeService;
-        this.userRepository = userRepository;
+        this.tableAssignmentValidator = tableAssignmentValidator;
         this.scanUrlTemplate = scanUrlTemplate;
         this.qrImageUrlTemplate = qrImageUrlTemplate;
         this.frontendSessionUrlTemplate = frontendSessionUrlTemplate;
@@ -287,26 +285,10 @@ public class RestaurantTableService {
                 .toList();
     }
 
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        assert authentication != null;
-        String username = authentication.getName();
-
-        return userRepository
-                .findByUsername(username)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found"));
-    }
-
     @Transactional
     public TableOccupancyResponse assignToCurrentStaff(Long tableId) {
 
-        User currentUser = getCurrentUser();
+        User currentUser = tableAssignmentValidator.getCurrentUser();
 
         RestaurantTable table =
                 restaurantTableRepository
@@ -318,8 +300,13 @@ public class RestaurantTableService {
             throw new BusinessException("Closed tables cannot be assigned");
         }
 
+        if (table.getAssignedStaff() != null &&
+                        table.getAssignedStaff().getId().equals(currentUser.getId())) {
+            throw new BusinessException("You are already assigned to this table");
+        }
+
         if (table.getAssignedStaff() != null) {
-            throw new BusinessException("Table already assigned");
+            throw new BusinessException("Table already assigned to another waiter");
         }
 
         table.setAssignedStaff(currentUser);
@@ -330,7 +317,7 @@ public class RestaurantTableService {
     @Transactional
     public TableOccupancyResponse unassignFromCurrentStaff(Long tableId) {
 
-        User currentUser = getCurrentUser();
+        User currentUser = tableAssignmentValidator.getCurrentUser();
 
         RestaurantTable table =
                 restaurantTableRepository
@@ -354,7 +341,7 @@ public class RestaurantTableService {
     @Transactional(readOnly = true)
     public List<TableOccupancyResponse> getAssignedTables() {
 
-        User currentUser = getCurrentUser();
+        User currentUser = tableAssignmentValidator.getCurrentUser();
 
         return restaurantTableRepository
                 .findAllByAssignedStaffId(

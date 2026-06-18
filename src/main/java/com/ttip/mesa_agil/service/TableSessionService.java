@@ -5,6 +5,7 @@ import com.ttip.mesa_agil.dto.requests.UpdateCustomerCountRequest;
 import com.ttip.mesa_agil.dto.responses.TableSessionDetailsResponse;
 import com.ttip.mesa_agil.exception.BusinessException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
+import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.TableSessionMapper;
 import com.ttip.mesa_agil.model.Order;
 import com.ttip.mesa_agil.model.RestaurantTable;
@@ -28,6 +29,7 @@ public class TableSessionService {
     private final TableSessionRepository tableSessionRepository;
     private final RestaurantTableRepository tableRepository;
     private final OrderRepository orderRepository;
+    private final TableAssignmentValidator tableAssignmentValidator;
 
     @Transactional
     public TableSessionDetailsResponse createSession(
@@ -41,6 +43,8 @@ public class TableSessionService {
                                 new ResourceNotFoundException(
                                         "Table not found"
                                 ));
+
+        tableAssignmentValidator.validateCurrentUserAssigned(tableId);
 
         if (!table.isEnabled()) {
             throw new BusinessException("Table is closed");
@@ -69,6 +73,8 @@ public class TableSessionService {
 
     @Transactional
     public void closeSession(Long tableId) {
+
+        tableAssignmentValidator.validateCurrentUserAssigned(tableId);
 
         TableSession session = tableSessionRepository
                 .findByTableIdAndActiveTrue(tableId)
@@ -111,19 +117,13 @@ public class TableSessionService {
         TableSession session =
                 tableSessionRepository.findById(sessionId)
                         .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Session not found"
-                                ));
+                                new ResourceNotFoundException("Session not found"));
 
         if (!session.getActive()) {
-            throw new BusinessException(
-                    "Session is closed"
-            );
+            throw new BusinessException("Session is closed");
         }
 
-        session.setCustomerCount(
-                request.customerCount()
-        );
+        session.setCustomerCount(request.customerCount());
 
         return TableSessionMapper.toResponse(session);
     }
