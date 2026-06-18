@@ -121,6 +121,37 @@ public class RestaurantTableController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/assigned")
+    public ResponseEntity<List<TableOccupancyResponse>> getAssignedTables() {
+
+        return ResponseEntity.ok(
+                restaurantTableService.getAssignedTables()
+        );
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{tableId}/assign")
+    public ResponseEntity<TableOccupancyResponse> assignTable(
+            @PathVariable Long tableId
+    ) {
+
+        return ResponseEntity.ok(
+                restaurantTableService.assignToCurrentStaff(tableId)
+        );
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{tableId}/unassign")
+    public ResponseEntity<TableOccupancyResponse> unassignTable(
+            @PathVariable Long tableId
+    ) {
+
+        return ResponseEntity.ok(
+                restaurantTableService.unassignFromCurrentStaff(tableId)
+        );
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/occupancy")
     public ResponseEntity<List<TableOccupancyResponse>> getOccupancy() {
         return ResponseEntity.ok(
