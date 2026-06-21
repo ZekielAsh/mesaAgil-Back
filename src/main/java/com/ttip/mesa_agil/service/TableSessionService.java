@@ -73,9 +73,6 @@ public class TableSessionService {
 
     @Transactional
     public void closeSession(Long tableId) {
-
-        tableAssignmentValidator.validateCurrentUserAssigned(tableId);
-
         TableSession session = tableSessionRepository
                 .findByTableIdAndActiveTrue(tableId)
                 .orElseThrow(() ->

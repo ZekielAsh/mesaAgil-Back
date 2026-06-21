@@ -19,19 +19,7 @@ public class TableAssignmentValidator {
     private final UserRepository userRepository;
 
     public void validateCurrentUserAssigned(Long tableId) {
-        User currentUser = getCurrentUser();
-
-        RestaurantTable table =
-                tableRepository.findById(tableId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
-
-        if (table.getAssignedStaff() == null) {
-            throw new BusinessException("Table has no assigned staff");
-        }
-
-        if (!tableRepository.existsByIdAndAssignedStaffId(tableId, currentUser.getId())) {
-            throw new BusinessException("You are not assigned to this table");
-        }
+        getAssignedTable(tableId);
     }
 
     public User getCurrentUser() {
@@ -45,5 +33,17 @@ public class TableAssignmentValidator {
                 .findByUsername(authentication.getName())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
+    }
+
+    public RestaurantTable getAssignedTable(Long tableId) {
+        User currentUser = getCurrentUser();
+
+        return tableRepository
+                .findByIdAndAssignedStaffId(
+                        tableId,
+                        currentUser.getId()
+                )
+                .orElseThrow(() ->
+                        new BusinessException("You are not assigned to this table"));
     }
 }

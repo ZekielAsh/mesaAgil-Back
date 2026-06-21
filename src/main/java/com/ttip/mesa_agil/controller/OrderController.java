@@ -46,7 +46,7 @@ public class OrderController {
     @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/bill-requests")
     public ResponseEntity<List<OrderResponse>> getBillRequests() {
-        return ResponseEntity.ok(orderService.getBillRequests());
+        return ResponseEntity.ok(orderService.getBillRequestsForCurrentStaff());
     }
 
     @PatchMapping("/{id}/request-bill")

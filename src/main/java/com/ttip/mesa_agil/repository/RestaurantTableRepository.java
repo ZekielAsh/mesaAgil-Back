@@ -18,4 +18,6 @@ public interface RestaurantTableRepository extends JpaRepository<RestaurantTable
     boolean existsByIdAndAssignedStaffId(Long tableId, Long staffId);
 
     List<RestaurantTable> findAllByAssignedStaffId(Long staffId);
+
+    Optional<RestaurantTable> findByIdAndAssignedStaffId(Long tableId, Long staffId);
 }

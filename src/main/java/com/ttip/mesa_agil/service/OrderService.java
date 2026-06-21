@@ -3,6 +3,7 @@ package com.ttip.mesa_agil.service;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.exception.*;
+import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.*;
 import com.ttip.mesa_agil.model.enums.OrderItemStatus;
@@ -21,11 +22,13 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final MenuService menuService;
     private final TableSessionService tableSessionService;
+    private final TableAssignmentValidator tableAssignmentValidator;
 
-    public OrderService(OrderRepository orderRepository, MenuService menuService, TableSessionService tableSessionService) {
+    public OrderService(OrderRepository orderRepository, MenuService menuService, TableSessionService tableSessionService, TableAssignmentValidator tableAssignmentValidator) {
         this.orderRepository = orderRepository;
         this.menuService = menuService;
         this.tableSessionService = tableSessionService;
+        this.tableAssignmentValidator = tableAssignmentValidator;
     }
 
     public OrderResponse getOrderById(Long orderId) {
@@ -39,8 +42,10 @@ public class OrderService {
     @Transactional
     public OrderResponse closeOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
-                () -> new OrderNotFoundException(orderId)
-        );
+                () -> new OrderNotFoundException(orderId));
+
+        tableAssignmentValidator.validateCurrentUserAssigned(
+                order.getTable().getId());
 
         if (order.getStatus() == OrderStatus.CLOSED) { throw new OrderClosedException(orderId); }
 
@@ -61,7 +66,6 @@ public class OrderService {
 
     @Transactional
     public OrderResponse addItems(Long orderId, CreateOrderItemsRequest request) {
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -70,7 +74,6 @@ public class OrderService {
         if (order.isBillRequested()) { throw new OrderBillRequestException("The order is on request bill"); }
 
         for (CreateOrderItemRequest req : request.orderItemRequestList()) {
-
             Item item = menuService.getItemById(req.itemId());
 
             OrderItem orderItem = new OrderItem();
@@ -107,8 +110,13 @@ public class OrderService {
         return OrderMapper.toResponse(order);
     }
 
-    public List<OrderResponse> getBillRequests() {
-        return orderRepository.findByBillRequestedTrue()
+    public List<OrderResponse> getBillRequestsForCurrentStaff() {
+        User currentUser = tableAssignmentValidator.getCurrentUser();
+
+        return orderRepository
+                .findAllByBillRequestedTrueAndTable_AssignedStaff_Id(
+                        currentUser.getId()
+                )
                 .stream()
                 .map(OrderMapper::toResponse)
                 .toList();

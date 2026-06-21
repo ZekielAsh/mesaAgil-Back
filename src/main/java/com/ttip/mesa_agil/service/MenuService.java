@@ -7,7 +7,7 @@ import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.model.FoodCategory;
 import com.ttip.mesa_agil.model.Item;
 import com.ttip.mesa_agil.repository.FoodCategoryRepository;
-import com.ttip.mesa_agil.repository.MenuRepository;
+import com.ttip.mesa_agil.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +19,13 @@ import java.util.List;
 public class MenuService {
 
     @Autowired
-    private MenuRepository menuRepository;
+    private ItemRepository itemRepository;
 
     @Autowired
     private FoodCategoryRepository foodCategoryRepository;
 
-    public MenuService(MenuRepository menuRepository, FoodCategoryRepository foodCategoryRepository) {
-        this.menuRepository = menuRepository;
+    public MenuService(ItemRepository itemRepository, FoodCategoryRepository foodCategoryRepository) {
+        this.itemRepository = itemRepository;
         this.foodCategoryRepository = foodCategoryRepository;
     }
 
@@ -35,12 +35,12 @@ public class MenuService {
         );
 
         Item item = new Item(null, name, description, imageUrl, price, true, category);
-        menuRepository.save(item);
+        itemRepository.save(item);
     }
 
     @Transactional
     public MenuResponse getMenu() {
-        List<Item> items = menuRepository.findByActiveTrue();
+        List<Item> items = itemRepository.findByActiveTrue();
 
         if (items.isEmpty()) {
             return new MenuResponse(List.of(), "No hay comidas disponibles");
@@ -61,13 +61,13 @@ public class MenuService {
     }
 
     public Item getItemById(Long itemId) {
-        return menuRepository.findById(itemId).orElseThrow(
+        return itemRepository.findById(itemId).orElseThrow(
                 () -> new OrderNotFoundException(itemId)
         );
     }
 
     public boolean isEmpty() {
-        return menuRepository.findAll().isEmpty();
+        return itemRepository.findAll().isEmpty();
     }
 
 }

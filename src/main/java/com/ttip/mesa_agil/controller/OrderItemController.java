@@ -37,9 +37,7 @@ public class OrderItemController {
     @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/ready")
     public ResponseEntity<List<OrderItemResponse>> getReadyOrderItems() {
-        return ResponseEntity.ok(orderItemService.getOrderItemsByStatusList(List.of(
-                OrderItemStatus.READY
-        )));
+        return ResponseEntity.ok(orderItemService.getReadyOrderItemsForCurrentStaff());
     }
 
     @PreAuthorize("hasAnyRole('KITCHEN', 'STAFF')")

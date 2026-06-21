@@ -22,6 +22,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             OrderStatus status
     );
 
+    List<Order> findAllByBillRequestedTrueAndTable_AssignedStaff_Id(
+            Long staffId
+    );
+
     boolean existsByTableSessionIdAndStatus(
             Long sessionId,
             OrderStatus status
