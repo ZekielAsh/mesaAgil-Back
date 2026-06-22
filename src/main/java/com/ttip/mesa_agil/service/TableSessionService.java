@@ -10,6 +10,7 @@ import com.ttip.mesa_agil.mapper.TableSessionMapper;
 import com.ttip.mesa_agil.model.Order;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.TableSession;
+import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.repository.OrderRepository;
 import com.ttip.mesa_agil.repository.RestaurantTableRepository;
@@ -32,11 +33,7 @@ public class TableSessionService {
     private final TableAssignmentValidator tableAssignmentValidator;
 
     @Transactional
-    public TableSessionDetailsResponse createSession(
-            Long tableId,
-            CreateTableSessionRequest request
-    ) {
-
+    public TableSessionDetailsResponse createSession(Long tableId, CreateTableSessionRequest request) {
         RestaurantTable table =
                 tableRepository.findById(tableId)
                         .orElseThrow(() ->
@@ -56,7 +53,9 @@ public class TableSessionService {
 
         TableSession session = new TableSession();
         session.setTable(table);
-        session.setCustomerCount(request.customerCount());
+        session.setCustomerCount(
+                Optional.ofNullable(request.customerCount())
+                        .orElse(0));
 
         TableSession savedSession = tableSessionRepository.save(session);
 
@@ -73,23 +72,33 @@ public class TableSessionService {
 
     @Transactional
     public void closeSession(Long tableId) {
-        TableSession session = tableSessionRepository
-                .findByTableIdAndActiveTrue(tableId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Active session not found"));
+        tableAssignmentValidator.validateCurrentUserAssigned(tableId);
+
+        TableSession session = findActiveSession(tableId).orElseThrow(
+                () -> new BusinessException("Session is already closed"));
 
         Order order = orderRepository
-                .findByTableSessionId(session.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found for session"));
+                .findByTableSessionIdAndStatus(session.getId(), OrderStatus.OPEN)
+                .orElse(null);
 
-        if (order.getStatus() == OrderStatus.OPEN) {
-            throw new BusinessException(
-                    "Cannot close session with open order"
-            );
+        if (order != null) {
+            order.setStatus(OrderStatus.CANCELLED);
+            order.setBillRequested(false);
+            order.setClosedAt(LocalDateTime.now());
+
+            order.getItems()
+                    .stream()
+                    .filter(item ->
+                            item.getStatus() != OrderItemStatus.DELIVERED)
+                    .forEach(item ->
+                            item.setStatus(OrderItemStatus.CANCELLED));
+            orderRepository.save(order);
         }
 
         session.setActive(false);
         session.setEndedAt(LocalDateTime.now());
+
+        tableSessionRepository.save(session);
     }
 
     public Optional<TableSession> findActiveSession(Long tableId) {

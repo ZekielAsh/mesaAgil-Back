@@ -47,7 +47,7 @@ public class OrderService {
         tableAssignmentValidator.validateCurrentUserAssigned(
                 order.getTable().getId());
 
-        if (order.getStatus() == OrderStatus.CLOSED) { throw new OrderClosedException(orderId); }
+        if (order.getStatus() != OrderStatus.OPEN) { throw new OrderClosedException(orderId); }
 
         if (!order.isBillRequested()) { throw new OrderBillRequestException("The bill was not requested");}
 
@@ -69,7 +69,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (order.getStatus() == OrderStatus.CLOSED) { throw new OrderClosedException(orderId); }
+        if (order.getStatus() != OrderStatus.OPEN) { throw new OrderClosedException(orderId); }
 
         if (order.isBillRequested()) { throw new OrderBillRequestException("The order is on request bill"); }
 
@@ -94,20 +94,23 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
+        if (order.getStatus() != OrderStatus.OPEN) {
+            throw new OrderClosedException(orderId);
+        }
+
         if(order.getItems().isEmpty()) {
             throw new OrderBillRequestEmptyException("The order items cannot be empty");
         }
 
         boolean hasPendingItems = order.getItems().stream()
-                .anyMatch(item ->
-                        item.getStatus() != OrderItemStatus.DELIVERED);
+                .anyMatch(item -> item.getStatus() != OrderItemStatus.DELIVERED);
 
         if (hasPendingItems) {
             throw new OrderHasUndeliveredItemsException("There are items that have not been delivered yet");
         }
 
         order.setBillRequested(true);
-        return OrderMapper.toResponse(order);
+        return OrderMapper.toResponse(orderRepository.save(order));
     }
 
     public List<OrderResponse> getBillRequestsForCurrentStaff() {

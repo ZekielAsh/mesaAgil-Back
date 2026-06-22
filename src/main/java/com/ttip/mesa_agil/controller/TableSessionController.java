@@ -38,7 +38,6 @@ public class TableSessionController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('STAFF')")
     @PatchMapping("/{sessionId}/customers")
     public ResponseEntity<TableSessionDetailsResponse> updateCustomers(
             @PathVariable Long sessionId,

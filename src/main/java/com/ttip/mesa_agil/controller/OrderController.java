@@ -53,9 +53,8 @@ public class OrderController {
     public ResponseEntity<Void> requestBill(@PathVariable Long id) {
         OrderResponse orderResponse = orderService.requestBill(id);
         notificationService.send(
-                "/room/staff",
-                new WebSocketEvent("BILL_REQUESTED", orderResponse)
-        );
+                "/room/staff/" + orderResponse.assignedStaffUsername(),
+                new WebSocketEvent("BILL_REQUESTED",orderResponse));
         return ResponseEntity.ok().build();
     }
 

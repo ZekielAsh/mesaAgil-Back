@@ -18,31 +18,31 @@ public class TableAssignmentValidator {
     private final RestaurantTableRepository tableRepository;
     private final UserRepository userRepository;
 
-    public void validateCurrentUserAssigned(Long tableId) {
-        getAssignedTable(tableId);
+    public RestaurantTable validateCurrentUserAssigned(Long tableId) {
+        return getAssignedTable(tableId);
     }
 
     public User getCurrentUser() {
         Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
+                SecurityContextHolder.getContext().getAuthentication();
 
-        assert authentication != null;
-        return userRepository
+        User user = userRepository
                 .findByUsername(authentication.getName())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
+
+        System.out.println("Current user id = " + user.getId());
+
+        return user;
     }
 
     public RestaurantTable getAssignedTable(Long tableId) {
         User currentUser = getCurrentUser();
 
+        System.out.println("tableId=" + tableId + " userId=" + currentUser.getId());
+
         return tableRepository
-                .findByIdAndAssignedStaffId(
-                        tableId,
-                        currentUser.getId()
-                )
+                .findByIdAndAssignedStaffId(tableId, currentUser.getId())
                 .orElseThrow(() ->
                         new BusinessException("You are not assigned to this table"));
     }
