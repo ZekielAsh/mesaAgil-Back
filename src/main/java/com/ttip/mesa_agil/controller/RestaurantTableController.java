@@ -5,7 +5,9 @@ import com.ttip.mesa_agil.dto.requests.UpdateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableOccupancyResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
+import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.service.RestaurantTableService;
+import com.ttip.mesa_agil.service.WebSocketNotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ import java.util.List;
 public class RestaurantTableController {
 
     private final RestaurantTableService restaurantTableService;
+    private final WebSocketNotificationService notificationService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -129,15 +132,15 @@ public class RestaurantTableController {
         );
     }
 
-    @PreAuthorize("hasRole('STAFF')")
     @PatchMapping("/{tableId}/assign")
     public ResponseEntity<TableOccupancyResponse> assignTable(
             @PathVariable Long tableId
     ) {
-
-        return ResponseEntity.ok(
-                restaurantTableService.assignToCurrentStaff(tableId)
-        );
+        TableOccupancyResponse response = restaurantTableService.assignToCurrentStaff(tableId);
+        notificationService.send(
+                "/room/tables",
+                new WebSocketEvent("TABLE_ASSIGNED", tableId));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('STAFF')")
@@ -145,10 +148,12 @@ public class RestaurantTableController {
     public ResponseEntity<TableOccupancyResponse> unassignTable(
             @PathVariable Long tableId
     ) {
-
-        return ResponseEntity.ok(
-                restaurantTableService.unassignFromCurrentStaff(tableId)
-        );
+        TableOccupancyResponse response =
+                restaurantTableService.unassignFromCurrentStaff(tableId);
+        notificationService.send(
+                "/room/tables",
+                new WebSocketEvent("TABLE_UNASSIGNED", tableId));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('STAFF')")
