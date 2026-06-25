@@ -1,9 +1,14 @@
 package com.ttip.mesa_agil.controller;
 
+import com.ttip.mesa_agil.dto.CloseSessionResult;
 import com.ttip.mesa_agil.dto.requests.UpdateCustomerCountRequest;
+import com.ttip.mesa_agil.dto.responses.TableOccupancyResponse;
+import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
+import com.ttip.mesa_agil.service.RestaurantTableService;
 import com.ttip.mesa_agil.service.TableSessionService;
 import com.ttip.mesa_agil.dto.requests.CreateTableSessionRequest;
 import com.ttip.mesa_agil.dto.responses.TableSessionDetailsResponse;
+import com.ttip.mesa_agil.service.WebSocketNotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 public class TableSessionController {
 
     private final TableSessionService service;
+    private final WebSocketNotificationService notificationService;
+    private final RestaurantTableService restaurantTableService;
 
     @PreAuthorize("hasRole('STAFF')")
     @PostMapping("/table/{tableId}")
@@ -24,9 +31,12 @@ public class TableSessionController {
             @PathVariable Long tableId,
             @RequestBody @Valid CreateTableSessionRequest request
     ) {
-        return ResponseEntity.ok(
-                service.createSession(tableId, request)
-        );
+        TableSessionDetailsResponse response = service.createSession(tableId, request);
+        TableOccupancyResponse occupancy = restaurantTableService.getOccupancyByTableId(tableId);
+        notificationService.send(
+                "/room/tables",
+                new WebSocketEvent("ASSIGNED_TABLE_UPDATED", occupancy));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('STAFF')")
@@ -34,22 +44,25 @@ public class TableSessionController {
     public ResponseEntity<Void> close(
             @PathVariable Long tableId
     ) {
-        service.closeSession(tableId);
+        TableOccupancyResponse occupancy = restaurantTableService.getOccupancyByTableId(tableId);
+        CloseSessionResult result = service.closeSession(tableId);
+        notificationService.send(
+                "/room/tables",
+                new WebSocketEvent("ASSIGNED_TABLE_UPDATED", occupancy));
+
+        if (result.cancelledOrderId() != null) {
+            notificationService.send(
+                    "/room/table/" + result.cancelledOrderId(),
+                    new WebSocketEvent("ORDER_CANCELLED", result.cancelledOrderId()));
+        }
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('STAFF')")
     @PatchMapping("/{sessionId}/customers")
     public ResponseEntity<TableSessionDetailsResponse> updateCustomers(
             @PathVariable Long sessionId,
             @RequestBody @Valid UpdateCustomerCountRequest request
     ) {
-
-        return ResponseEntity.ok(
-                service.updateCustomerCount(
-                        sessionId,
-                        request
-                )
-        );
+        return ResponseEntity.ok(service.updateCustomerCount(sessionId,request));
     }
 }

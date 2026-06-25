@@ -29,6 +29,10 @@ public class RestaurantTable {
     @Column(name = "qr_token", unique = true, length = 36)
     private String qrToken;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_staff_id")
+    private User assignedStaff;
+
     @PrePersist
     public void ensureQrToken() {
         if (qrToken == null || qrToken.isBlank()) {

@@ -5,7 +5,9 @@ import com.ttip.mesa_agil.dto.requests.UpdateRestaurantTableRequest;
 import com.ttip.mesa_agil.dto.responses.RestaurantTableQrResponse;
 import com.ttip.mesa_agil.dto.responses.TableOccupancyResponse;
 import com.ttip.mesa_agil.dto.responses.TableSessionResponse;
+import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.service.RestaurantTableService;
+import com.ttip.mesa_agil.service.WebSocketNotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ import java.util.List;
 public class RestaurantTableController {
 
     private final RestaurantTableService restaurantTableService;
+    private final WebSocketNotificationService notificationService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -53,13 +56,13 @@ public class RestaurantTableController {
         return ResponseEntity.ok(restaurantTableService.update(tableId, request));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @PatchMapping("/{tableId}/enable")
     public ResponseEntity<RestaurantTableQrResponse> enable(@PathVariable @Min(1) Long tableId) {
         return ResponseEntity.ok(restaurantTableService.enable(tableId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @PatchMapping("/{tableId}/close")
     public ResponseEntity<RestaurantTableQrResponse> close(@PathVariable @Min(1) Long tableId) {
         return ResponseEntity.ok(restaurantTableService.close(tableId));
@@ -118,6 +121,39 @@ public class RestaurantTableController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(sessionUri)
                 .build();
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/assigned")
+    public ResponseEntity<List<TableOccupancyResponse>> getAssignedTables() {
+
+        return ResponseEntity.ok(
+                restaurantTableService.getAssignedTables()
+        );
+    }
+
+    @PatchMapping("/{tableId}/assign")
+    public ResponseEntity<TableOccupancyResponse> assignTable(
+            @PathVariable Long tableId
+    ) {
+        TableOccupancyResponse response = restaurantTableService.assignToCurrentStaff(tableId);
+        notificationService.send(
+                "/room/tables",
+                new WebSocketEvent("ASSIGNED_TABLE_UPDATED", response));
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{tableId}/unassign")
+    public ResponseEntity<TableOccupancyResponse> unassignTable(
+            @PathVariable Long tableId
+    ) {
+        TableOccupancyResponse response =
+                restaurantTableService.unassignFromCurrentStaff(tableId);
+        notificationService.send(
+                "/room/tables",
+                new WebSocketEvent("ASSIGNED_TABLE_UPDATED", response));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('STAFF')")

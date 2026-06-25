@@ -7,6 +7,8 @@ public record TableOccupancyResponse(
         Integer tableNumber,
         TableStatus status,
         Integer customerCount,
-        Long sessionId
+        Long sessionId,
+        Long assignedStaffId,
+        String assignedStaffUsername
 ) {
 }

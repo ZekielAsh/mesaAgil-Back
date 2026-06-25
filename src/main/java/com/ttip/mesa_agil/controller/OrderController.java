@@ -37,7 +37,7 @@ public class OrderController {
     public ResponseEntity<Void> closeOrder(@PathVariable @Min(1) Long orderId) {
         OrderResponse orderResponse = orderService.closeOrderById(orderId);
         notificationService.send(
-                "/room/table/" + orderResponse.tableId(),
+                "/room/order/" + orderResponse.id(),
                 new WebSocketEvent("ORDER_CLOSED", orderId)
         );
         return ResponseEntity.ok().build();
@@ -46,16 +46,15 @@ public class OrderController {
     @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/bill-requests")
     public ResponseEntity<List<OrderResponse>> getBillRequests() {
-        return ResponseEntity.ok(orderService.getBillRequests());
+        return ResponseEntity.ok(orderService.getBillRequestsForCurrentStaff());
     }
 
     @PatchMapping("/{id}/request-bill")
     public ResponseEntity<Void> requestBill(@PathVariable Long id) {
         OrderResponse orderResponse = orderService.requestBill(id);
         notificationService.send(
-                "/room/staff",
-                new WebSocketEvent("BILL_REQUESTED", orderResponse)
-        );
+                "/room/staff/" + orderResponse.assignedStaffUsername(),
+                new WebSocketEvent("BILL_REQUESTED",orderResponse));
         return ResponseEntity.ok().build();
     }
 

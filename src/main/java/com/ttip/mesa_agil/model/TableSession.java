@@ -35,7 +35,9 @@ public class TableSession {
 
     @PrePersist
     public void onCreate() {
-        startedAt = LocalDateTime.now();
-        active = true;
+        if (startedAt == null) {
+            startedAt = LocalDateTime.now();
+        }
+        if (active == null) { active = true; }
     }
 }

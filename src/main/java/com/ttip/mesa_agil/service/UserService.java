@@ -20,17 +20,6 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
-    public void createAdmin(String username, String password) {
-        createUser(username, password, UserRole.ADMIN);
-    }
-
-    @Transactional
-    public void createKitchen(String username, String password) { createUser(username, password, UserRole.KITCHEN); }
-
-    @Transactional
-    public void createStaff(String username, String password) { createUser(username, password, UserRole.STAFF); }
-
     private void createUser(String username, String password, UserRole userRole) {
         if (username == null || username.isBlank()) {
             throw new BusinessException("Username is required");
@@ -39,16 +28,27 @@ public class UserService {
             throw new BusinessException("Password too short");
         }
 
-        try {
-            User user = new User();
-            user.setUsername(username);
-            user.setPassword(passwordEncoder.encode(password));
-            user.setRole(userRole);
-
-            userRepository.save(user);
-        } catch (DataIntegrityViolationException e) {
-            // Probar errores, si es posible usar UserAlreadyExistsException
-            throw new BusinessException("User already exists", e);
+        if (this.existsByUsername(username)) {
+            throw new BusinessException("User already exists");
         }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(userRole);
+
+        userRepository.save(user);
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Transactional
+    public void createIfNotExists(String username, String password, UserRole role) {
+        if (userRepository.existsByUsername(username)) {
+            return;
+        }
+        createUser(username, password, role);
     }
 }

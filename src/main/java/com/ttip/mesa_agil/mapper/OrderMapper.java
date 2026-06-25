@@ -14,9 +14,18 @@ public class OrderMapper {
                 .map(OrderItemMapper::toResponse)
                 .toList();
 
+        System.out.println(order.getTable().getId());
+
+        System.out.println(
+                order.getTable().getAssignedStaff() == null ?
+                        "NO STAFF" :
+                        order.getTable().getAssignedStaff().getUsername()
+        );
+
         return new OrderResponse(
                 order.getId(),
                 order.getTable().getId(),
+                order.getTable().getAssignedStaff().getUsername(),
                 items,
                 order.getStatus().name(),
                 order.isBillRequested(),
