@@ -9,9 +9,11 @@ import com.ttip.mesa_agil.exception.BusinessException;
 import com.ttip.mesa_agil.exception.OrderNotFoundException;
 import com.ttip.mesa_agil.exception.ResourceNotFoundException;
 import com.ttip.mesa_agil.exception.RestaurantTableAlreadyExistsException;
+import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.RestaurantTableMapper;
 import com.ttip.mesa_agil.model.RestaurantTable;
 import com.ttip.mesa_agil.model.TableSession;
+import com.ttip.mesa_agil.model.User;
 import com.ttip.mesa_agil.model.enums.OrderStatus;
 import com.ttip.mesa_agil.model.enums.TableStatus;
 import com.ttip.mesa_agil.repository.RestaurantTableRepository;
@@ -32,6 +34,7 @@ public class RestaurantTableService {
     private final TableSessionService tableSessionService;
     private final OrderService orderService;
     private final QrCodeService qrCodeService;
+    private final TableAssignmentValidator tableAssignmentValidator;
     private final String scanUrlTemplate;
     private final String qrImageUrlTemplate;
     private final String frontendSessionUrlTemplate;
@@ -40,6 +43,7 @@ public class RestaurantTableService {
                                   TableSessionService tableSessionService,
                                   OrderService orderService,
                                   QrCodeService qrCodeService,
+                                  TableAssignmentValidator tableAssignmentValidator,
                                   @Value("${app.qr.scan-url-template:http://localhost:8080/tables/qr/{qrToken}/redirect}") String scanUrlTemplate,
                                   @Value("${app.qr.image-url-template:http://localhost:8080/tables/qr/{qrToken}/image}") String qrImageUrlTemplate,
                                   @Value("${app.qr.frontend-session-url-template:http://localhost:8081/tables/{qrToken}/session}") String frontendSessionUrlTemplate) {
@@ -47,6 +51,7 @@ public class RestaurantTableService {
         this.tableSessionService = tableSessionService;
         this.orderService = orderService;
         this.qrCodeService = qrCodeService;
+        this.tableAssignmentValidator = tableAssignmentValidator;
         this.scanUrlTemplate = scanUrlTemplate;
         this.qrImageUrlTemplate = qrImageUrlTemplate;
         this.frontendSessionUrlTemplate = frontendSessionUrlTemplate;
@@ -215,6 +220,7 @@ public class RestaurantTableService {
                 );
     }
 
+    @Transactional
     public URI buildFrontendSessionUri(String qrToken) {
         TableSessionResponse session = resolveSession(qrToken);
         String url = frontendSessionUrlTemplate
@@ -279,14 +285,86 @@ public class RestaurantTableService {
                 .toList();
     }
 
-    private TableOccupancyResponse toOccupancyResponse(
-            RestaurantTable table
-    ) {
+    @Transactional(readOnly = true)
+    public TableOccupancyResponse getOccupancyByTableId(Long tableId) {
+        RestaurantTable table =
+                restaurantTableRepository
+                        .findById(tableId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Table not found"));
+        return toOccupancyResponse(table);
+    }
 
-        Optional<TableSession> session =
-                tableSessionService.findActiveSession(
-                        table.getId()
-                );
+    @Transactional
+    public TableOccupancyResponse assignToCurrentStaff(Long tableId) {
+
+        User currentUser = tableAssignmentValidator.getCurrentUser();
+
+        RestaurantTable table =
+                restaurantTableRepository
+                        .findById(tableId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Table not found"));
+
+        if (!table.isEnabled()) {
+            throw new BusinessException("Closed tables cannot be assigned");
+        }
+
+        if (table.getAssignedStaff() != null &&
+                        table.getAssignedStaff().getId().equals(currentUser.getId())) {
+            throw new BusinessException("You are already assigned to this table");
+        }
+
+        if (table.getAssignedStaff() != null) {
+            throw new BusinessException("Table already assigned to another waiter");
+        }
+
+        table.setAssignedStaff(currentUser);
+
+        return toOccupancyResponse(restaurantTableRepository.save(table));
+    }
+
+    @Transactional
+    public TableOccupancyResponse unassignFromCurrentStaff(Long tableId) {
+
+        User currentUser = tableAssignmentValidator.getCurrentUser();
+
+        RestaurantTable table =
+                restaurantTableRepository
+                        .findById(tableId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Table not found"));
+
+        if (table.getAssignedStaff() == null) {
+            throw new BusinessException("Table is not assigned");
+        }
+
+        if (!table.getAssignedStaff().getId().equals(currentUser.getId())) {
+            throw new BusinessException("You are not assigned to this table");
+        }
+
+        table.setAssignedStaff(null);
+
+        return toOccupancyResponse(restaurantTableRepository.save(table));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TableOccupancyResponse> getAssignedTables() {
+
+        User currentUser = tableAssignmentValidator.getCurrentUser();
+
+        return restaurantTableRepository
+                .findAllByAssignedStaffId(
+                        currentUser.getId()
+                )
+                .stream()
+                .map(this::toOccupancyResponse)
+                .toList();
+    }
+
+    public TableOccupancyResponse toOccupancyResponse(RestaurantTable table) {
+
+        Optional<TableSession> session = tableSessionService.findActiveSession(table.getId());
 
         TableStatus status;
 
@@ -303,7 +381,13 @@ public class RestaurantTableService {
                 table.getNumber(),
                 status,
                 session.map(TableSession::getCustomerCount).orElse(0),
-                session.map(TableSession::getId).orElse(null)
+                session.map(TableSession::getId).orElse(null),
+                table.getAssignedStaff() != null
+                        ? table.getAssignedStaff().getId()
+                        : null,
+                table.getAssignedStaff() != null
+                        ? table.getAssignedStaff().getUsername()
+                        : null
         );
     }
 }

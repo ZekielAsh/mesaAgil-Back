@@ -10,4 +10,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<OrderItem> findAllByStatusInOrderByCreatedAtAsc(
             List<OrderItemStatus> statuses
     );
+
+    List<OrderItem> findAllByStatusAndOrder_Table_AssignedStaff_Id(
+            OrderItemStatus status,
+            Long staffId
+    );
 }

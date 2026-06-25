@@ -20,17 +20,6 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
-    public void createAdmin(String username, String password) {
-        createUser(username, password, UserRole.ADMIN);
-    }
-
-    @Transactional
-    public void createKitchen(String username, String password) { createUser(username, password, UserRole.KITCHEN); }
-
-    @Transactional
-    public void createStaff(String username, String password) { createUser(username, password, UserRole.STAFF); }
-
     private void createUser(String username, String password, UserRole userRole) {
         if (username == null || username.isBlank()) {
             throw new BusinessException("Username is required");

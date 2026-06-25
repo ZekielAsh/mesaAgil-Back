@@ -98,6 +98,12 @@ public class DevDataSeeder implements CommandLineRunner {
                 "staff123",
                 UserRole.STAFF
         );
+
+        userService.createIfNotExists(
+                "staff2",
+                "staff234",
+                UserRole.STAFF
+        );
     }
 
     private void seedHistoricalData() {

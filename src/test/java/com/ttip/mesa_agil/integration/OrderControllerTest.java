@@ -70,6 +70,7 @@ public class OrderControllerTest {
         OrderResponse response = new OrderResponse(
                 1L,
                 10L,
+                "staffUser",
                 List.of(orderItem),
                 "OPEN",
                 false,
@@ -126,6 +127,7 @@ public class OrderControllerTest {
         OrderResponse response = new OrderResponse(
                 1L,
                 10L,
+                "staffUser",
                 List.of(orderItem),
                 "OPEN",
                 false,
@@ -171,6 +173,7 @@ public class OrderControllerTest {
         OrderResponse response = new OrderResponse(
                 1L,
                 10L,
+                "staffUser",
                 List.of(orderItem),
                 "OPEN",
                 false,
