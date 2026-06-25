@@ -285,6 +285,16 @@ public class RestaurantTableService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public TableOccupancyResponse getOccupancyByTableId(Long tableId) {
+        RestaurantTable table =
+                restaurantTableRepository
+                        .findById(tableId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Table not found"));
+        return toOccupancyResponse(table);
+    }
+
     @Transactional
     public TableOccupancyResponse assignToCurrentStaff(Long tableId) {
 
@@ -352,7 +362,7 @@ public class RestaurantTableService {
                 .toList();
     }
 
-    private TableOccupancyResponse toOccupancyResponse(RestaurantTable table) {
+    public TableOccupancyResponse toOccupancyResponse(RestaurantTable table) {
 
         Optional<TableSession> session = tableSessionService.findActiveSession(table.getId());
 

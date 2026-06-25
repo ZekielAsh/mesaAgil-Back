@@ -30,17 +30,11 @@ public class TableAssignmentValidator {
                 .findByUsername(authentication.getName())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
-
-        System.out.println("Current user id = " + user.getId());
-
         return user;
     }
 
     public RestaurantTable getAssignedTable(Long tableId) {
         User currentUser = getCurrentUser();
-
-        System.out.println("tableId=" + tableId + " userId=" + currentUser.getId());
-
         return tableRepository
                 .findByIdAndAssignedStaffId(tableId, currentUser.getId())
                 .orElseThrow(() ->

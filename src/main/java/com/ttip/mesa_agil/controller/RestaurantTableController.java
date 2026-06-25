@@ -139,7 +139,7 @@ public class RestaurantTableController {
         TableOccupancyResponse response = restaurantTableService.assignToCurrentStaff(tableId);
         notificationService.send(
                 "/room/tables",
-                new WebSocketEvent("TABLE_ASSIGNED", tableId));
+                new WebSocketEvent("ASSIGNED_TABLE_UPDATED", response));
         return ResponseEntity.ok(response);
     }
 
@@ -152,7 +152,7 @@ public class RestaurantTableController {
                 restaurantTableService.unassignFromCurrentStaff(tableId);
         notificationService.send(
                 "/room/tables",
-                new WebSocketEvent("TABLE_UNASSIGNED", tableId));
+                new WebSocketEvent("ASSIGNED_TABLE_UPDATED", response));
         return ResponseEntity.ok(response);
     }
 

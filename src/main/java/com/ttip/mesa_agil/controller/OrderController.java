@@ -37,7 +37,7 @@ public class OrderController {
     public ResponseEntity<Void> closeOrder(@PathVariable @Min(1) Long orderId) {
         OrderResponse orderResponse = orderService.closeOrderById(orderId);
         notificationService.send(
-                "/room/table/" + orderResponse.tableId(),
+                "/room/order/" + orderResponse.id(),
                 new WebSocketEvent("ORDER_CLOSED", orderId)
         );
         return ResponseEntity.ok().build();

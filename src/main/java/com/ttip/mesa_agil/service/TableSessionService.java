@@ -1,5 +1,6 @@
 package com.ttip.mesa_agil.service;
 
+import com.ttip.mesa_agil.dto.CloseSessionResult;
 import com.ttip.mesa_agil.dto.requests.CreateTableSessionRequest;
 import com.ttip.mesa_agil.dto.requests.UpdateCustomerCountRequest;
 import com.ttip.mesa_agil.dto.responses.TableSessionDetailsResponse;
@@ -71,7 +72,7 @@ public class TableSessionService {
     }
 
     @Transactional
-    public void closeSession(Long tableId) {
+    public CloseSessionResult closeSession(Long tableId) {
         tableAssignmentValidator.validateCurrentUserAssigned(tableId);
 
         TableSession session = findActiveSession(tableId).orElseThrow(
@@ -80,8 +81,9 @@ public class TableSessionService {
         Order order = orderRepository
                 .findByTableSessionIdAndStatus(session.getId(), OrderStatus.OPEN)
                 .orElse(null);
-
+        Long cancelledOrderId = null;
         if (order != null) {
+            cancelledOrderId = order.getId();
             order.setStatus(OrderStatus.CANCELLED);
             order.setBillRequested(false);
             order.setClosedAt(LocalDateTime.now());
@@ -99,6 +101,7 @@ public class TableSessionService {
         session.setEndedAt(LocalDateTime.now());
 
         tableSessionRepository.save(session);
+        return new CloseSessionResult(tableId, cancelledOrderId);
     }
 
     public Optional<TableSession> findActiveSession(Long tableId) {
@@ -119,7 +122,6 @@ public class TableSessionService {
             Long sessionId,
             UpdateCustomerCountRequest request
     ) {
-
         TableSession session =
                 tableSessionRepository.findById(sessionId)
                         .orElseThrow(() ->
