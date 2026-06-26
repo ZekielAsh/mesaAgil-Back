@@ -1,5 +1,6 @@
 package com.ttip.mesa_agil.dto.responses;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public record TableSessionDetailsResponse(
@@ -8,7 +9,7 @@ public record TableSessionDetailsResponse(
         Integer tableNumber,
         Integer customerCount,
         Boolean active,
-        LocalDateTime startedAt,
-        LocalDateTime endedAt
+        Instant startedAt,
+        Instant endedAt
 ) {
 }

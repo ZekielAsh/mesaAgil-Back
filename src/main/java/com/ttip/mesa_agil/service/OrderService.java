@@ -13,7 +13,7 @@ import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -56,7 +56,7 @@ public class OrderService {
         order.setBillRequested(false);
 
         order.setStatus(OrderStatus.CLOSED);
-        order.setClosedAt(LocalDateTime.now());
+        order.setClosedAt(Instant.now());
 
         tableSessionService.closeSession(
                 order.getTable().getId()

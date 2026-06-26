@@ -20,7 +20,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,7 +86,7 @@ public class TableSessionService {
             cancelledOrderId = order.getId();
             order.setStatus(OrderStatus.CANCELLED);
             order.setBillRequested(false);
-            order.setClosedAt(LocalDateTime.now());
+            order.setClosedAt(Instant.now());
 
             order.getItems()
                     .stream()
@@ -98,7 +98,7 @@ public class TableSessionService {
         }
 
         session.setActive(false);
-        session.setEndedAt(LocalDateTime.now());
+        session.setEndedAt(Instant.now());
 
         tableSessionRepository.save(session);
         return new CloseSessionResult(tableId, cancelledOrderId);

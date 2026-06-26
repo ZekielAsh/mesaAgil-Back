@@ -3,7 +3,7 @@ package com.ttip.mesa_agil.dto.responses;
 import com.ttip.mesa_agil.model.enums.OrderItemStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record OrderItemResponse(
         Long id,
@@ -13,5 +13,5 @@ public record OrderItemResponse(
         int quantity,
         BigDecimal price,
         OrderItemStatus status,
-        LocalDateTime createdAt
+        Instant createdAt
 ) { }

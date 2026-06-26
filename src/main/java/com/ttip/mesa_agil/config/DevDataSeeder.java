@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.boot.CommandLineRunner;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -123,14 +124,9 @@ public class DevDataSeeder implements CommandLineRunner {
 
             for (int i = 0; i < ordersCount; i++) {
 
-                LocalDateTime orderDate =
-                        LocalDateTime.now()
-                                .minusDays(
-                                        random.nextInt(90)
-                                )
-                                .minusHours(
-                                        random.nextInt(24)
-                                );
+                Instant orderDate = Instant.now()
+                        .minus(Duration.ofDays(random.nextInt(90)))
+                        .minus(Duration.ofHours(random.nextInt(24)));
 
                 createHistoricalSessionAndOrder(
                         table,
@@ -146,7 +142,7 @@ public class DevDataSeeder implements CommandLineRunner {
             RestaurantTable table,
             List<MenuItemDTO> menu,
             Random random,
-            LocalDateTime date
+            Instant date
     ) {
 
         TableSession session =
@@ -185,7 +181,7 @@ public class DevDataSeeder implements CommandLineRunner {
 
     private TableSession createHistoricalSession(
             RestaurantTable table,
-            LocalDateTime date,
+            Instant date,
             Random random
     ) {
 
@@ -203,9 +199,7 @@ public class DevDataSeeder implements CommandLineRunner {
         session.setStartedAt(date);
 
         session.setEndedAt(
-                date.plusMinutes(
-                        30 + random.nextInt(120)
-                )
+                date.plus(Duration.ofMinutes(30 + random.nextInt(120)))
         );
 
         return tableSessionRepository.save(session);
@@ -213,7 +207,7 @@ public class DevDataSeeder implements CommandLineRunner {
 
     private Order createHistoricalOrder(
             TableSession session,
-            LocalDateTime date
+            Instant date
     ) {
 
         Order order = new Order();
@@ -278,7 +272,7 @@ public class DevDataSeeder implements CommandLineRunner {
     private void addItemsWithDate(
             Order order,
             CreateOrderItemsRequest request,
-            LocalDateTime date
+            Instant date
     ) {
 
         for (CreateOrderItemRequest req :
