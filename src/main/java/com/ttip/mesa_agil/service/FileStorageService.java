@@ -19,6 +19,9 @@ public class FileStorageService {
     @Value("${upload.path}")
     private String uploadPath;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     private static final List<String> ALLOWED_TYPES = List.of(
             "image/jpeg",
             "image/png",
@@ -56,6 +59,25 @@ public class FileStorageService {
                 StandardCopyOption.REPLACE_EXISTING
         );
 
-        return "/uploads/" + fileName;
+        return baseUrl + "/uploads/" + fileName;
+    }
+
+    public void delete(String imageUrl) throws IOException {
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+
+        String uploadsPrefix = baseUrl + "/uploads/";
+
+        if (!imageUrl.startsWith(uploadsPrefix)) {
+            return;
+        }
+
+        String fileName = imageUrl.substring(uploadsPrefix.length());
+
+        Path file = Paths.get(uploadPath).resolve(fileName);
+
+        Files.deleteIfExists(file);
     }
 }

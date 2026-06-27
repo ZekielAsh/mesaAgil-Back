@@ -70,10 +70,7 @@ public class ItemService {
         return itemRepository.save(item);
     }
 
-    public Item update(Long id, UpdateItemRequest request) {
-
-        validate(request);
-
+    public Item update(Long id, UpdateItemRequest request, MultipartFile imageFile) throws IOException{
         Item item = itemRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Item not found"));
@@ -82,13 +79,33 @@ public class ItemService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Category not found"));
 
+        boolean hasFile = imageFile != null && !imageFile.isEmpty();
+        boolean hasUrl = request.getImageUrl() != null && !request.getImageUrl().isBlank();
+
+        if (hasFile && hasUrl) {
+            throw new IllegalArgumentException(
+                    "Debe enviar una imagen o una URL, pero no ambas.");
+        }
+
+        validate(request);
+
         item.setName(request.getName().trim());
         item.setDescription(request.getDescription().trim());
-        item.setImageUrl(request.getImageUrl().trim());
         item.setPrice(request.getPrice());
         item.setFoodCategory(category);
         if (request.getActive() != null) {
             item.setActive(request.getActive());
+        }
+
+        if(hasFile) {
+            fileStorageService.delete(item.getImageUrl());
+            String newImageUrl = fileStorageService.save(imageFile);
+            item.setImageUrl(newImageUrl);
+        } else if (hasUrl) {
+            validateUrl(request.getImageUrl());
+            // me fijo si hay una imagen subida local.
+            fileStorageService.delete(item.getImageUrl());
+            item.setImageUrl(request.getImageUrl());
         }
 
         return itemRepository.save(item);

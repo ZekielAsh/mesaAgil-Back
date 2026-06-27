@@ -37,12 +37,13 @@ public class ItemController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
+    @PutMapping(value ="/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ItemResponse> update(
             @PathVariable Long id,
-            @RequestBody UpdateItemRequest request) {
+            @ModelAttribute UpdateItemRequest request,
+            @RequestPart(required = false)MultipartFile imageFile) throws IOException {
 
-        Item item = itemService.update(id, request);
+        Item item = itemService.update(id, request, imageFile);
 
         return ResponseEntity.ok(
                 ItemMapper.toResponse(item)
