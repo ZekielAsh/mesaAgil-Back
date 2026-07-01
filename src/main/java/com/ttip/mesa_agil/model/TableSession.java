@@ -3,6 +3,7 @@ package com.ttip.mesa_agil.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,15 +29,15 @@ public class TableSession {
     private Boolean active;
 
     @Column(name = "started_at", nullable = false)
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
     @Column(name = "ended_at")
-    private LocalDateTime endedAt;
+    private Instant endedAt;
 
     @PrePersist
     public void onCreate() {
         if (startedAt == null) {
-            startedAt = LocalDateTime.now();
+            startedAt = Instant.now();
         }
         if (active == null) { active = true; }
     }
