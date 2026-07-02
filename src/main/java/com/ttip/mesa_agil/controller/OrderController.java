@@ -44,6 +44,17 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrderRequestBill(@PathVariable @Min(1) Long orderId) {
+        orderService.cancelRequestBill(orderId);
+        notificationService.send(
+                "/room/order/" + orderId,
+                new WebSocketEvent("ORDER_REOPEN", orderId)
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/bill-requests")
     public ResponseEntity<List<OrderResponse>> getBillRequests() {
         return ResponseEntity.ok(orderService.getBillRequestsForCurrentStaff());

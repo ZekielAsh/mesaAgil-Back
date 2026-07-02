@@ -65,6 +65,20 @@ public class OrderService {
     }
 
     @Transactional
+    public void cancelRequestBill(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new OrderNotFoundException(orderId));
+
+        tableAssignmentValidator.validateCurrentUserAssigned(
+                order.getTable().getId());
+
+        if (order.getStatus() != OrderStatus.OPEN) { throw new OrderClosedException(orderId); }
+        if (!order.isBillRequested()) { throw new OrderBillRequestException("The bill was not requested");}
+
+        order.setBillRequested(false);
+    }
+
+    @Transactional
     public OrderResponse addItems(Long orderId, CreateOrderItemsRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
