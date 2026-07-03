@@ -143,4 +143,23 @@ public class OrderService {
         return orderRepository.findByTableSessionIdAndStatus(sessionId, status)
                 .orElseThrow(() -> new BusinessException("No order found for session id: " + sessionId + " and status: " + status));
     }
+
+    @Transactional
+    public void cancelPendingOrderItem(Long orderId, Long orderItemId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getItems().isEmpty()) {
+            return;
+        }
+
+        boolean removed = order.getItems().removeIf(
+                item -> item.getId().equals(orderItemId) &&
+                        item.getStatus() == (OrderItemStatus.PENDING)
+        );
+
+        if (!removed) {
+            throw new ResourceNotFoundException("OrderItem Id not found");
+        }
+    }
 }
