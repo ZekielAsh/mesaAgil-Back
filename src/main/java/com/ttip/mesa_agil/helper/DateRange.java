@@ -16,6 +16,7 @@ public record DateRange(Instant from, Instant to) {
             case LAST_DAY -> now.minus(1, ChronoUnit.DAYS);
             case LAST_WEEK -> now.minus(7, ChronoUnit.DAYS);
             case LAST_MONTH -> now.minus(30, ChronoUnit.DAYS);
+            case LAST_YEAR -> now.minus(365, ChronoUnit.DAYS);
         };
 
         return new DateRange(from, now);
