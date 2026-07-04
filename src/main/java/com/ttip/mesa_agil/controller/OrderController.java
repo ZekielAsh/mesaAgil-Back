@@ -44,6 +44,17 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrderRequestBill(@PathVariable @Min(1) Long orderId) {
+        orderService.cancelRequestBill(orderId);
+        notificationService.send(
+                "/room/order/" + orderId,
+                new WebSocketEvent("ORDER_REOPEN", orderId)
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/bill-requests")
     public ResponseEntity<List<OrderResponse>> getBillRequests() {
         return ResponseEntity.ok(orderService.getBillRequestsForCurrentStaff());
@@ -70,6 +81,29 @@ public class OrderController {
                 )
         );
         return ResponseEntity.ok(orderResponse);
+    }
+
+    @DeleteMapping("/{orderId}/items/{orderItemId}")
+    public ResponseEntity<Void> cancelPendingOrderItem(@PathVariable @Min(1) Long orderId,
+                                                       @PathVariable @Min(1) Long orderItemId) {
+        orderService.cancelPendingOrderItem(orderId, orderItemId);
+
+        notificationService.send(
+                "/room/kitchen",
+                new WebSocketEvent(
+                        "ORDER_ITEMS_ADDED",
+                        orderItemId
+                )
+        );
+        notificationService.send(
+                "/room/orderItems",
+                new WebSocketEvent(
+                        "ORDER_ITEM_CANCELED",
+                        orderItemId
+                )
+        );
+
+        return ResponseEntity.ok().build();
     }
 
 }

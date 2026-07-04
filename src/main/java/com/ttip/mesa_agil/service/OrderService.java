@@ -65,6 +65,20 @@ public class OrderService {
     }
 
     @Transactional
+    public void cancelRequestBill(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new OrderNotFoundException(orderId));
+
+        tableAssignmentValidator.validateCurrentUserAssigned(
+                order.getTable().getId());
+
+        if (order.getStatus() != OrderStatus.OPEN) { throw new OrderClosedException(orderId); }
+        if (!order.isBillRequested()) { throw new OrderBillRequestException("The bill was not requested");}
+
+        order.setBillRequested(false);
+    }
+
+    @Transactional
     public OrderResponse addItems(Long orderId, CreateOrderItemsRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
@@ -128,5 +142,24 @@ public class OrderService {
     public Order getOpenOrderBySession(Long sessionId, OrderStatus status) {
         return orderRepository.findByTableSessionIdAndStatus(sessionId, status)
                 .orElseThrow(() -> new BusinessException("No order found for session id: " + sessionId + " and status: " + status));
+    }
+
+    @Transactional
+    public void cancelPendingOrderItem(Long orderId, Long orderItemId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getItems().isEmpty()) {
+            return;
+        }
+
+        boolean removed = order.getItems().removeIf(
+                item -> item.getId().equals(orderItemId) &&
+                        item.getStatus() == (OrderItemStatus.PENDING)
+        );
+
+        if (!removed) {
+            throw new ResourceNotFoundException("OrderItem Id not found");
+        }
     }
 }
