@@ -3,7 +3,6 @@ package com.ttip.mesa_agil.helper;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 public record DateRange(Instant from, Instant to) {

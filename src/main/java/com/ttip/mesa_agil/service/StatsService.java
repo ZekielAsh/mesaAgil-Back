@@ -4,6 +4,7 @@ import com.ttip.mesa_agil.dto.*;
 import com.ttip.mesa_agil.dto.responses.StatsDashboardResponse;
 import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.helper.DateRange;
+import com.ttip.mesa_agil.helper.StatsPdfGenerator;
 import com.ttip.mesa_agil.model.OrderItem;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 import com.ttip.mesa_agil.repository.StatsRepository;
@@ -24,9 +25,11 @@ import java.util.stream.Collectors;
 public class StatsService {
 
     private final StatsRepository statsRepository;
+    private final StatsPdfGenerator pdfGenerator;
 
-    public StatsService(StatsRepository statsRepository) {
+    public StatsService(StatsRepository statsRepository,StatsPdfGenerator pdfGenerator) {
         this.statsRepository = statsRepository;
+        this.pdfGenerator = pdfGenerator;
     }
 
     private DateRange resolveRange(StatsPeriod period) {
@@ -113,7 +116,6 @@ public class StatsService {
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
 
-            YearMonth currentMonth = YearMonth.from(range.to().atZone(zone));
             YearMonth firstMonth =YearMonth.from(range.from().atZone(zone));
 
             List<RevenuePointDto> timeline = new ArrayList<>();
@@ -220,5 +222,11 @@ public class StatsService {
                 .stream()
                 .limit(5)
                 .toList();
+    }
+
+    public byte[] generatePdf(StatsPeriod period) {
+        StatsDashboardResponse dashboard = getDashboard(period);
+
+        return pdfGenerator.generate(period,dashboard);
     }
 }
