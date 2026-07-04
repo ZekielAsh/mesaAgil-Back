@@ -44,8 +44,8 @@ public class TableSessionController {
     public ResponseEntity<Void> close(
             @PathVariable Long tableId
     ) {
-        TableOccupancyResponse occupancy = restaurantTableService.getOccupancyByTableId(tableId);
         CloseSessionResult result = service.closeSession(tableId);
+        TableOccupancyResponse occupancy = restaurantTableService.getOccupancyByTableId(tableId);
         notificationService.send(
                 "/room/tables",
                 new WebSocketEvent("ASSIGNED_TABLE_UPDATED", occupancy));
