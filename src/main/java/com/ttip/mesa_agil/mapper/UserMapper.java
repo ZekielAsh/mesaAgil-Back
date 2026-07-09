@@ -8,7 +8,7 @@ import java.util.List;
 public class UserMapper {
 
     public static UserResponse toResponse(User user) {
-        return new UserResponse(user.getUsername(), user.getRole());
+        return new UserResponse(user.getId(), user.getUsername(), user.getRole());
     }
 
     public static List<UserResponse> toResponseList(List<User> userList) {
