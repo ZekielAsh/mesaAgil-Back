@@ -51,8 +51,9 @@ public class TableSessionController {
                 new WebSocketEvent("ASSIGNED_TABLE_UPDATED", occupancy));
 
         if (result.cancelledOrderId() != null) {
+            System.out.println("here");
             notificationService.send(
-                    "/room/table/" + result.cancelledOrderId(),
+                    "/room/order/" + result.cancelledOrderId(),
                     new WebSocketEvent("ORDER_CANCELLED", result.cancelledOrderId()));
         }
         return ResponseEntity.ok().build();
