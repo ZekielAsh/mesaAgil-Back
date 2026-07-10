@@ -1,6 +1,7 @@
 package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.responses.BillSummaryResponse;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.service.OrderService;
@@ -69,16 +70,22 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{orderId}/bill-summary")
+    public ResponseEntity<BillSummaryResponse> getBillSummary(
+            @PathVariable @Min(1) Long orderId
+    ) {
+        return ResponseEntity.ok(
+                orderService.getBillSummary(orderId)
+        );
+    }
+
     @PostMapping("/{orderId}/items")
     public ResponseEntity<OrderResponse> addItems(@PathVariable @Min(1) Long orderId,
                                                   @Valid @RequestBody CreateOrderItemsRequest createOrderItemsRequest) {
         OrderResponse orderResponse = orderService.addItems(orderId, createOrderItemsRequest);
         notificationService.send(
                 "/room/kitchen",
-                new WebSocketEvent(
-                        "ORDER_ITEMS_ADDED",
-                        orderResponse
-                )
+                new WebSocketEvent("ORDER_ITEMS_ADDED", orderResponse)
         );
         return ResponseEntity.ok(orderResponse);
     }
@@ -90,20 +97,12 @@ public class OrderController {
 
         notificationService.send(
                 "/room/kitchen",
-                new WebSocketEvent(
-                        "ORDER_ITEMS_ADDED",
-                        orderItemId
-                )
+                new WebSocketEvent("ORDER_ITEMS_ADDED", orderItemId)
         );
         notificationService.send(
                 "/room/orderItems",
-                new WebSocketEvent(
-                        "ORDER_ITEM_CANCELED",
-                        orderItemId
-                )
+                new WebSocketEvent("ORDER_ITEM_CANCELED", orderItemId)
         );
-
         return ResponseEntity.ok().build();
     }
-
 }

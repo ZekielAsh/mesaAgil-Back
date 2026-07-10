@@ -17,7 +17,6 @@ import java.time.format.DateTimeFormatter;
 
 @Component
 public class StatsPdfGenerator {
-
     private static final Font TITLE_FONT =
             FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
 
@@ -49,12 +48,8 @@ public class StatsPdfGenerator {
             document.close();
 
             return output.toByteArray();
-
         } catch (DocumentException e) {
-            throw new RuntimeException(
-                    "Error al generar el PDF",
-                    e
-            );
+            throw new RuntimeException("Error al generar el PDF", e);
         }
     }
 
@@ -73,11 +68,7 @@ public class StatsPdfGenerator {
         table.addCell("$" + dashboard.summary().totalRevenue());
 
         table.addCell("Pedidos");
-        table.addCell(
-                dashboard.summary()
-                        .totalOrders()
-                        .toString()
-        );
+        table.addCell(dashboard.summary().totalOrders().toString());
         table.addCell("Ticket promedio");
         table.addCell("$" + dashboard.summary().avgTicket());
 
@@ -91,7 +82,6 @@ public class StatsPdfGenerator {
 
         addHeaderCell(table, "Fecha");
         addHeaderCell(table, "Ingreso");
-
         for (RevenuePointDto point : dashboard.revenueTimeline()) {
             table.addCell(point.label());
             table.addCell("$" + point.revenue());
@@ -106,10 +96,7 @@ public class StatsPdfGenerator {
 
         addHeaderCell(table, "Producto");
         addHeaderCell(table, "Cantidad");
-
-        for (TopItemDto item :
-                dashboard.topProducts()) {
-
+        for (TopItemDto item : dashboard.topProducts()) {
             table.addCell(item.name());
             table.addCell(item.total().toString());
         }
@@ -117,157 +104,73 @@ public class StatsPdfGenerator {
         document.add(new Paragraph(" "));
     }
 
-    private void addTopRevenueProducts(
-            Document document,
-            StatsDashboardResponse dashboard
-    ) throws DocumentException {
-
-        document.add(new Paragraph(
-                "Comidas con mayor facturación",
-                SECTION_FONT
-        ));
-
+    private void addTopRevenueProducts(Document document, StatsDashboardResponse dashboard) throws DocumentException {
+        document.add(new Paragraph("Comidas con mayor facturación", SECTION_FONT));
         PdfPTable table = createTable();
 
         addHeaderCell(table, "Producto");
         addHeaderCell(table, "Facturación");
-
-        for (TopRevenueItemDto item :
-                dashboard.topRevenueProducts()) {
-
+        for (TopRevenueItemDto item : dashboard.topRevenueProducts()) {
             table.addCell(item.name());
-
             table.addCell("$" + item.totalRevenue());
         }
-
         document.add(table);
-
         document.add(new Paragraph(" "));
     }
 
-    private void addCategoryRevenue(
-            Document document,
-            StatsDashboardResponse dashboard
-    ) throws DocumentException {
-
-        document.add(new Paragraph(
-                "Ingresos por categoría",
-                SECTION_FONT
-        ));
-
+    private void addCategoryRevenue(Document document, StatsDashboardResponse dashboard) throws DocumentException {
+        document.add(new Paragraph("Ingresos por categoría", SECTION_FONT));
         PdfPTable table = createTable();
 
         addHeaderCell(table, "Categoría");
         addHeaderCell(table, "Ingreso");
-
-        for (CategoryRevenueDto category :
-                dashboard.categoryRevenue()) {
-
+        for (CategoryRevenueDto category : dashboard.categoryRevenue()) {
             table.addCell(category.category());
-
             table.addCell("$" + category.revenue());
         }
-
         document.add(table);
-
         document.add(new Paragraph(" "));
     }
 
-    private void addTableOrders(
-            Document document,
-            StatsDashboardResponse dashboard
-    ) throws DocumentException {
-
-        document.add(new Paragraph(
-                "Mesas más usadas",
-                SECTION_FONT
-        ));
+    private void addTableOrders(Document document, StatsDashboardResponse dashboard) throws DocumentException {
+        document.add(new Paragraph("Mesas más usadas", SECTION_FONT));
 
         PdfPTable table = createTable();
 
         addHeaderCell(table, "Mesa");
         addHeaderCell(table, "Pedidos");
-
-        for (TableOrdersDto tableOrder :
-                dashboard.tableOrders()) {
-
-            table.addCell(
-                    "Mesa " +
-                            tableOrder.tableNumber()
-            );
-
-            table.addCell(
-                    tableOrder.totalOrders().toString()
-            );
+        for (TableOrdersDto tableOrder : dashboard.tableOrders()) {
+            table.addCell("Mesa " + tableOrder.tableNumber());
+            table.addCell(tableOrder.totalOrders().toString());
         }
-
         document.add(table);
-
         document.add(new Paragraph(" "));
     }
 
-    private void addTableRevenue(
-            Document document,
-            StatsDashboardResponse dashboard
-    ) throws DocumentException {
-
-        document.add(new Paragraph(
-                "Ingresos por mesa",
-                SECTION_FONT
-        ));
+    private void addTableRevenue(Document document, StatsDashboardResponse dashboard) throws DocumentException {
+        document.add(new Paragraph("Ingresos por mesa", SECTION_FONT));
 
         PdfPTable table = createTable();
 
         addHeaderCell(table, "Mesa");
         addHeaderCell(table, "Ingreso");
-
-        for (TableRevenueDto tableRevenue :
-                dashboard.tableRevenue()) {
-
-            table.addCell(
-                    "Mesa " +
-                            tableRevenue.tableNumber()
-            );
-
-            table.addCell(
-                    "$" + tableRevenue.revenue()
-            );
+        for (TableRevenueDto tableRevenue : dashboard.tableRevenue()) {
+            table.addCell("Mesa " + tableRevenue.tableNumber());
+            table.addCell("$" + tableRevenue.revenue());
         }
-
         document.add(table);
-
         document.add(new Paragraph(" "));
     }
 
-    private void addFooter(
-            Document document
-    ) throws DocumentException {
-
+    private void addFooter(Document document) throws DocumentException {
         document.add(new Paragraph("----------------------------"));
-
-        document.add(new Paragraph(
-                "Generado automáticamente por MesaÁgil",
-                TEXT_FONT
-        ));
-
-        document.add(new Paragraph(
-                LocalDateTime.now()
-                        .format(
-                                DateTimeFormatter.ofPattern(
-                                        "dd/MM/yyyy HH:mm"
-                                )
-                        ),
-                TEXT_FONT
-        ));
+        document.add(new Paragraph("Generado automáticamente por MesaÁgil", TEXT_FONT));
+        document.add(new Paragraph(LocalDateTime.now().
+            format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), TEXT_FONT));
     }
 
-    private void addHeaderCell(
-            PdfPTable table,
-            String text
-    ) {
-        PdfPCell cell = new PdfPCell(
-                new Phrase(text, HEADER_FONT)
-        );
+    private void addHeaderCell(PdfPTable table, String text) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, HEADER_FONT));
 
         cell.setBackgroundColor(Color.LIGHT_GRAY);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);

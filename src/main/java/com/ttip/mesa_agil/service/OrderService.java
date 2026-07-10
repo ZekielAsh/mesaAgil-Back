@@ -2,6 +2,7 @@ package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.responses.BillSummaryResponse;
 import com.ttip.mesa_agil.exception.*;
 import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.OrderMapper;
@@ -125,6 +126,15 @@ public class OrderService {
 
         order.setBillRequested(true);
         return OrderMapper.toResponse(orderRepository.save(order));
+    }
+
+    @Transactional(readOnly = true)
+    public BillSummaryResponse getBillSummary(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        return OrderMapper.toBillSummary(order);
     }
 
     public List<OrderResponse> getBillRequestsForCurrentStaff() {
