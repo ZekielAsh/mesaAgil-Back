@@ -4,6 +4,7 @@ import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
 import com.ttip.mesa_agil.dto.responses.BillSummaryResponse;
 import com.ttip.mesa_agil.exception.*;
+import com.ttip.mesa_agil.helper.BillPdfGenerator;
 import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.*;
@@ -24,12 +25,20 @@ public class OrderService {
     private final MenuService menuService;
     private final TableSessionService tableSessionService;
     private final TableAssignmentValidator tableAssignmentValidator;
+    private final BillPdfGenerator billPdfGenerator;
 
-    public OrderService(OrderRepository orderRepository, MenuService menuService, TableSessionService tableSessionService, TableAssignmentValidator tableAssignmentValidator) {
+    public OrderService(
+            OrderRepository orderRepository,
+            MenuService menuService,
+            TableSessionService tableSessionService,
+            TableAssignmentValidator tableAssignmentValidator,
+            BillPdfGenerator billPdfGenerator
+    ) {
         this.orderRepository = orderRepository;
         this.menuService = menuService;
         this.tableSessionService = tableSessionService;
         this.tableAssignmentValidator = tableAssignmentValidator;
+        this.billPdfGenerator = billPdfGenerator;
     }
 
     public OrderResponse getOrderById(Long orderId) {
@@ -135,6 +144,12 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         return OrderMapper.toBillSummary(order);
+    }
+
+    @Transactional
+    public byte[] generateBillPdf(Long orderId) {
+        BillSummaryResponse summary = getBillSummary(orderId);
+        return billPdfGenerator.generate(summary);
     }
 
     public List<OrderResponse> getBillRequestsForCurrentStaff() {

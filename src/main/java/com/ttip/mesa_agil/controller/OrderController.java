@@ -8,6 +8,8 @@ import com.ttip.mesa_agil.service.OrderService;
 import com.ttip.mesa_agil.service.WebSocketNotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -77,6 +79,20 @@ public class OrderController {
         return ResponseEntity.ok(
                 orderService.getBillSummary(orderId)
         );
+    }
+
+    @GetMapping(value = "/{orderId}/bill-summary/pdf",
+            produces = MediaType.APPLICATION_PDF_VALUE
+    )
+    public ResponseEntity<byte[]> downloadBillPdf(
+            @PathVariable @Min(1) Long orderId
+    ) {
+        byte[] pdf = orderService.generateBillPdf(orderId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=resumen-cuenta.pdf")
+                .body(pdf);
     }
 
     @PostMapping("/{orderId}/items")
