@@ -2,18 +2,20 @@ package com.ttip.mesa_agil.helper;
 
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
-public record DateRange(LocalDateTime from, LocalDateTime to) {
+public record DateRange(Instant from, Instant to) {
 
     public static DateRange resolvePeriod(StatsPeriod period) {
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
-        LocalDateTime from = switch (period) {
-            case LAST_DAY -> now.minusDays(1);
-            case LAST_WEEK -> now.minusWeeks(1);
-            case LAST_MONTH -> now.minusMonths(1);
+        Instant from = switch (period) {
+            case LAST_DAY -> now.minus(1, ChronoUnit.DAYS);
+            case LAST_WEEK -> now.minus(7, ChronoUnit.DAYS);
+            case LAST_MONTH -> now.minus(30, ChronoUnit.DAYS);
+            case LAST_YEAR -> now.minus(365, ChronoUnit.DAYS);
         };
 
         return new DateRange(from, now);

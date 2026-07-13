@@ -11,8 +11,12 @@ import com.ttip.mesa_agil.repository.FoodCategoryRepository;
 import com.ttip.mesa_agil.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @Service
@@ -21,10 +25,34 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
     private final FoodCategoryRepository foodCategoryRepository;
+    private final FileStorageService fileStorageService;
 
-    public Item create(CreateItemRequest request) {
+    public Item create(CreateItemRequest request, MultipartFile imageFile) throws IOException {
+        String finalImageUrl;
+
+        boolean hasFile = imageFile != null && !imageFile.isEmpty();
+        boolean hasUrl = request.getImageUrl() != null && !request.getImageUrl().isBlank();
+
+        if (!hasFile && !hasUrl) {
+            throw new IllegalArgumentException(
+                    "Debe proporcionar una imagen o una URL."
+            );
+        }
+
+        if (hasFile && hasUrl) {
+            throw new IllegalArgumentException(
+                    "Debe enviar una imagen o una URL, pero no ambas."
+            );
+        }
 
         validate(request);
+
+        if (hasFile) {
+            finalImageUrl = fileStorageService.save(imageFile);
+        } else {
+            validateUrl(request.getImageUrl());
+            finalImageUrl = request.getImageUrl();
+        }
 
         FoodCategory category = foodCategoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() ->
@@ -34,7 +62,7 @@ public class ItemService {
 
         item.setName(request.getName().trim());
         item.setDescription(request.getDescription().trim());
-        item.setImageUrl(request.getImageUrl().trim());
+        item.setImageUrl(finalImageUrl.trim());
         item.setPrice(request.getPrice());
         item.setFoodCategory(category);
         item.setActive(true);
@@ -42,10 +70,7 @@ public class ItemService {
         return itemRepository.save(item);
     }
 
-    public Item update(Long id, UpdateItemRequest request) {
-
-        validate(request);
-
+    public Item update(Long id, UpdateItemRequest request, MultipartFile imageFile) throws IOException{
         Item item = itemRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Item not found"));
@@ -54,13 +79,33 @@ public class ItemService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Category not found"));
 
+        boolean hasFile = imageFile != null && !imageFile.isEmpty();
+        boolean hasUrl = request.getImageUrl() != null && !request.getImageUrl().isBlank();
+
+        if (hasFile && hasUrl) {
+            throw new IllegalArgumentException(
+                    "Debe enviar una imagen o una URL, pero no ambas.");
+        }
+
+        validate(request);
+
         item.setName(request.getName().trim());
         item.setDescription(request.getDescription().trim());
-        item.setImageUrl(request.getImageUrl().trim());
         item.setPrice(request.getPrice());
         item.setFoodCategory(category);
         if (request.getActive() != null) {
             item.setActive(request.getActive());
+        }
+
+        if(hasFile) {
+            fileStorageService.delete(item.getImageUrl());
+            String newImageUrl = fileStorageService.save(imageFile);
+            item.setImageUrl(newImageUrl);
+        } else if (hasUrl) {
+            validateUrl(request.getImageUrl());
+            // me fijo si hay una imagen subida local.
+            fileStorageService.delete(item.getImageUrl());
+            item.setImageUrl(request.getImageUrl());
         }
 
         return itemRepository.save(item);
@@ -79,6 +124,23 @@ public class ItemService {
         return itemRepository.findAll();
     }
 
+    private void validateUrl(String imageUrl) {
+        try {
+
+            URI uri = new URI(imageUrl);
+
+            if (uri.getScheme() == null ||
+                    (!uri.getScheme().equals("http") &&
+                            !uri.getScheme().equals("https"))) {
+
+                throw new ValidationFailedException("URL inválida.");
+            }
+
+        } catch (URISyntaxException e) {
+            throw new ValidationFailedException("URL inválida.");
+        }
+    }
+
     private void validate(BaseItemRequest request) {
 
         if (request.getName() == null || request.getName().trim().isBlank()) {
@@ -87,10 +149,6 @@ public class ItemService {
 
         if (request.getDescription() == null || request.getDescription().trim().isBlank()) {
             throw new ValidationFailedException("Description is required");
-        }
-
-        if (request.getImageUrl() == null || request.getImageUrl().trim().isBlank()) {
-            throw new ValidationFailedException("Image URL is required");
         }
 
         if (request.getPrice() == null || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {

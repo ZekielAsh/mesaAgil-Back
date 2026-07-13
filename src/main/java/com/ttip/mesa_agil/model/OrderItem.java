@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "t_order_item")
@@ -38,12 +38,12 @@ public class OrderItem {
     private OrderItemStatus status;
 
     @Column(name = "created_at",nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @PrePersist
     public void onCreate() {
         if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
+            this.createdAt = Instant.now();
         }
     }
 

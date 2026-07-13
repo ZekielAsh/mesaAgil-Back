@@ -5,6 +5,8 @@ import com.ttip.mesa_agil.dto.responses.StatsDashboardResponse;
 import com.ttip.mesa_agil.dto.responses.StatsSummaryResponse;
 import com.ttip.mesa_agil.model.enums.StatsPeriod;
 import com.ttip.mesa_agil.service.StatsService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -106,5 +108,21 @@ public class StatsController {
         return ResponseEntity.ok(
                 statsService.getTopRevenueProducts(period)
         );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(value = "/report", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> downloadReport(
+            @RequestParam StatsPeriod period
+    ) {
+        byte[] pdf = statsService.generatePdf(period);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=estadisticas.pdf"
+                )
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

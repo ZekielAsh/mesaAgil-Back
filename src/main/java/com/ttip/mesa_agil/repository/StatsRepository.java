@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 
@@ -21,8 +21,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
     AND o.createdAt BETWEEN :from AND :to
 """)
     List<OrderItem> getRevenueTimelineData(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -32,8 +32,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         AND oi.order.createdAt BETWEEN :from AND :to
     """)
     BigDecimal getTotalRevenue(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -43,8 +43,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         AND o.createdAt BETWEEN :from AND :to
     """)
     Long getTotalOrders(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -59,8 +59,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         ORDER BY SUM(oi.quantity) DESC
     """)
     List<TopItemDto> getTopProducts(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -75,8 +75,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
     """)
     List<TopRevenueItemDto> getTopRevenueProducts(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -91,8 +91,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
     """)
     List<CategoryRevenueDto> getCategoryRevenue(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -107,8 +107,8 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         ORDER BY COUNT(o) DESC
     """)
     List<TableOrdersDto> getTableOrders(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 
     @Query("""
@@ -124,7 +124,7 @@ public interface StatsRepository extends JpaRepository<Order, Long> {
         ORDER BY SUM(oi.unitPrice * oi.quantity) DESC
     """)
     List<TableRevenueDto> getTableRevenue(
-            LocalDateTime from,
-            LocalDateTime to
+            Instant from,
+            Instant to
     );
 }

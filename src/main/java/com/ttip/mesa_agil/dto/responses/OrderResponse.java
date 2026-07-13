@@ -1,6 +1,6 @@
 package com.ttip.mesa_agil.dto.responses;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record OrderResponse(
@@ -10,6 +10,6 @@ public record OrderResponse(
         List<OrderItemResponse> orderItems,
         String status,
         Boolean billRequested,
-        LocalDateTime createdAt,
-        LocalDateTime closedAt
+        Instant createdAt,
+        Instant closedAt
 ) { }

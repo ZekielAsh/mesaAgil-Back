@@ -1,12 +1,15 @@
 package com.ttip.mesa_agil.controller;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.responses.BillSummaryResponse;
 import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import com.ttip.mesa_agil.dto.websocket.WebSocketEvent;
 import com.ttip.mesa_agil.service.OrderService;
 import com.ttip.mesa_agil.service.WebSocketNotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -44,6 +47,17 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrderRequestBill(@PathVariable @Min(1) Long orderId) {
+        orderService.cancelRequestBill(orderId);
+        notificationService.send(
+                "/room/order/" + orderId,
+                new WebSocketEvent("ORDER_REOPEN", orderId)
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
     @GetMapping("/bill-requests")
     public ResponseEntity<List<OrderResponse>> getBillRequests() {
         return ResponseEntity.ok(orderService.getBillRequestsForCurrentStaff());
@@ -58,18 +72,53 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{orderId}/bill-summary")
+    public ResponseEntity<BillSummaryResponse> getBillSummary(
+            @PathVariable @Min(1) Long orderId
+    ) {
+        return ResponseEntity.ok(
+                orderService.getBillSummary(orderId)
+        );
+    }
+
+    @GetMapping(value = "/{orderId}/bill-summary/pdf",
+            produces = MediaType.APPLICATION_PDF_VALUE
+    )
+    public ResponseEntity<byte[]> downloadBillPdf(
+            @PathVariable @Min(1) Long orderId
+    ) {
+        byte[] pdf = orderService.generateBillPdf(orderId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=resumen-cuenta.pdf")
+                .body(pdf);
+    }
+
     @PostMapping("/{orderId}/items")
     public ResponseEntity<OrderResponse> addItems(@PathVariable @Min(1) Long orderId,
                                                   @Valid @RequestBody CreateOrderItemsRequest createOrderItemsRequest) {
         OrderResponse orderResponse = orderService.addItems(orderId, createOrderItemsRequest);
         notificationService.send(
                 "/room/kitchen",
-                new WebSocketEvent(
-                        "ORDER_ITEMS_ADDED",
-                        orderResponse
-                )
+                new WebSocketEvent("ORDER_ITEMS_ADDED", orderResponse)
         );
         return ResponseEntity.ok(orderResponse);
     }
 
+    @DeleteMapping("/{orderId}/items/{orderItemId}")
+    public ResponseEntity<Void> cancelPendingOrderItem(@PathVariable @Min(1) Long orderId,
+                                                       @PathVariable @Min(1) Long orderItemId) {
+        orderService.cancelPendingOrderItem(orderId, orderItemId);
+
+        notificationService.send(
+                "/room/kitchen",
+                new WebSocketEvent("ORDER_ITEMS_ADDED", orderItemId)
+        );
+        notificationService.send(
+                "/room/orderItems",
+                new WebSocketEvent("ORDER_ITEM_CANCELED", orderItemId)
+        );
+        return ResponseEntity.ok().build();
+    }
 }

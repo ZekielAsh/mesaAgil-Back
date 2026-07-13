@@ -2,7 +2,9 @@ package com.ttip.mesa_agil.service;
 
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemRequest;
 import com.ttip.mesa_agil.dto.requests.CreateOrderItemsRequest;
+import com.ttip.mesa_agil.dto.responses.BillSummaryResponse;
 import com.ttip.mesa_agil.exception.*;
+import com.ttip.mesa_agil.helper.BillPdfGenerator;
 import com.ttip.mesa_agil.helper.TableAssignmentValidator;
 import com.ttip.mesa_agil.mapper.OrderMapper;
 import com.ttip.mesa_agil.model.*;
@@ -13,7 +15,7 @@ import com.ttip.mesa_agil.dto.responses.OrderResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -23,12 +25,20 @@ public class OrderService {
     private final MenuService menuService;
     private final TableSessionService tableSessionService;
     private final TableAssignmentValidator tableAssignmentValidator;
+    private final BillPdfGenerator billPdfGenerator;
 
-    public OrderService(OrderRepository orderRepository, MenuService menuService, TableSessionService tableSessionService, TableAssignmentValidator tableAssignmentValidator) {
+    public OrderService(
+            OrderRepository orderRepository,
+            MenuService menuService,
+            TableSessionService tableSessionService,
+            TableAssignmentValidator tableAssignmentValidator,
+            BillPdfGenerator billPdfGenerator
+    ) {
         this.orderRepository = orderRepository;
         this.menuService = menuService;
         this.tableSessionService = tableSessionService;
         this.tableAssignmentValidator = tableAssignmentValidator;
+        this.billPdfGenerator = billPdfGenerator;
     }
 
     public OrderResponse getOrderById(Long orderId) {
@@ -56,12 +66,26 @@ public class OrderService {
         order.setBillRequested(false);
 
         order.setStatus(OrderStatus.CLOSED);
-        order.setClosedAt(LocalDateTime.now());
+        order.setClosedAt(Instant.now());
 
         tableSessionService.closeSession(
                 order.getTable().getId()
         );
         return OrderMapper.toResponse(orderRepository.save(order));
+    }
+
+    @Transactional
+    public void cancelRequestBill(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new OrderNotFoundException(orderId));
+
+        tableAssignmentValidator.validateCurrentUserAssigned(
+                order.getTable().getId());
+
+        if (order.getStatus() != OrderStatus.OPEN) { throw new OrderClosedException(orderId); }
+        if (!order.isBillRequested()) { throw new OrderBillRequestException("The bill was not requested");}
+
+        order.setBillRequested(false);
     }
 
     @Transactional
@@ -113,6 +137,21 @@ public class OrderService {
         return OrderMapper.toResponse(orderRepository.save(order));
     }
 
+    @Transactional(readOnly = true)
+    public BillSummaryResponse getBillSummary(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        return OrderMapper.toBillSummary(order);
+    }
+
+    @Transactional
+    public byte[] generateBillPdf(Long orderId) {
+        BillSummaryResponse summary = getBillSummary(orderId);
+        return billPdfGenerator.generate(summary);
+    }
+
     public List<OrderResponse> getBillRequestsForCurrentStaff() {
         User currentUser = tableAssignmentValidator.getCurrentUser();
 
@@ -128,5 +167,24 @@ public class OrderService {
     public Order getOpenOrderBySession(Long sessionId, OrderStatus status) {
         return orderRepository.findByTableSessionIdAndStatus(sessionId, status)
                 .orElseThrow(() -> new BusinessException("No order found for session id: " + sessionId + " and status: " + status));
+    }
+
+    @Transactional
+    public void cancelPendingOrderItem(Long orderId, Long orderItemId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getItems().isEmpty()) {
+            return;
+        }
+
+        boolean removed = order.getItems().removeIf(
+                item -> item.getId().equals(orderItemId) &&
+                        item.getStatus() == (OrderItemStatus.PENDING)
+        );
+
+        if (!removed) {
+            throw new ResourceNotFoundException("OrderItem Id not found");
+        }
     }
 }
